@@ -3,7 +3,7 @@ import { registerInserterMediaCategory } from "@wordpress/block-editor";
 
 if (typeof wp !== "undefined") {
   // My AstroBin Pictures
-  wp.data.dispatch('core/block-editor').registerInserterMediaCategory({
+  wp.data.dispatch("core/block-editor").registerInserterMediaCategory({
     name: "astrobin-my-pictures",
     labels: {
       name: __("AstroBin | My pictures", "mosne-astrobin"),
@@ -47,8 +47,8 @@ if (typeof wp !== "undefined") {
         title: result.title,
         hash: result.hash,
         caption: `<a href="https://app.astrobin.com/i/${result.hash}" target="_blank" rel="nofollow">${result.title}</a> by <a href="https://app.astrobin.com/u/${result.user}" target="_blank" rel="nofollow">${result.user}</a>`,
-        previewUrl: result.url_duckduckgo,
-        url: result.url_real,
+        previewUrl: result.url_duckduckgo || result.url_thumb,
+        url: result.url_real || result.url_regular,
       }));
     },
     getReportUrl: ({ sourceId }) =>
@@ -57,7 +57,7 @@ if (typeof wp !== "undefined") {
   });
 
   // Public pictures
-  wp.data.dispatch('core/block-editor').registerInserterMediaCategory({
+  wp.data.dispatch("core/block-editor").registerInserterMediaCategory({
     name: "astrobin-public-pictures",
     labels: {
       name: __("AstroBin | Public pictures", "mosne-astrobin"),
@@ -94,8 +94,8 @@ if (typeof wp !== "undefined") {
         title: result.title,
         hash: result.hash,
         caption: `<a href="https://app.astrobin.com/i/${result.hash}" target="_blank" rel="nofollow">${result.title}</a> by <a href="https://app.astrobin.com/u/${result.user}" target="_blank" rel="nofollow">${result.user}</a>`,
-        previewUrl: result.url_duckduckgo,
-        url: result.url_real,
+        previewUrl: result.url_duckduckgo || result.url_thumb,
+        url: result.url_real || result.url_regular,
       }));
     },
     getReportUrl: ({ sourceId }) =>
@@ -104,7 +104,7 @@ if (typeof wp !== "undefined") {
   });
 
   // Users' galleries
-  wp.data.dispatch('core/block-editor').registerInserterMediaCategory({
+  wp.data.dispatch("core/block-editor").registerInserterMediaCategory({
     name: "astrobin-other-user-gallery",
     labels: {
       name: __("AstroBin | Users' galleries", "mosne-astrobin"),
@@ -141,8 +141,8 @@ if (typeof wp !== "undefined") {
         title: result.title,
         hash: result.hash,
         caption: `<a href="https://app.astrobin.com/i/${result.hash}" target="_blank" rel="nofollow">${result.title}</a> by <a href="https://app.astrobin.com/u/${result.user}" target="_blank" rel="nofollow">${result.user}</a>`,
-        previewUrl: result.url_duckduckgo,
-        url: result.url_real,
+        previewUrl: result.url_duckduckgo || result.url_thumb,
+        url: result.url_real || result.url_regular,
       }));
     },
     getReportUrl: ({ sourceId }) =>
@@ -151,7 +151,7 @@ if (typeof wp !== "undefined") {
   });
 
   // Image of the day
-  wp.data.dispatch('core/block-editor').registerInserterMediaCategory({
+  wp.data.dispatch("core/block-editor").registerInserterMediaCategory({
     name: "astrobin-image-of-the-day",
     labels: {
       name: __("AstroBin | Image of the day", "mosne-astrobin"),
@@ -159,48 +159,95 @@ if (typeof wp !== "undefined") {
     },
     mediaType: "image",
     async fetch(query = {}) {
-      const defaultArgs = {
-        limit: query.per_page,
-        type: "image_of_the_day",
-      };
-      console.log(query);
-      const finalQuery = { ...query, ...defaultArgs };
-      const mapFromInserterMediaRequest = {
-        per_page: "page_size",
-        page: "page", // Page in this context will get different IOTDs
-      };
-      const url = new URL(`${mosneAstroBin.apiUrl}/search`);
-      Object.entries(finalQuery).forEach(([key, value]) => {
-        const queryKey = mapFromInserterMediaRequest[key] || key;
-        url.searchParams.set(queryKey, value);
-      });
-      const response = await window.fetch(url, {
-        headers: {
-          "X-WP-Nonce": mosneAstroBin.nonce,
-        },
-      });
-      const jsonResponse = await response.json();
-      const results = jsonResponse.objects || [];
-      return results.map((result) => ({
-        sourceId: result.id,
-        id: undefined,
-        title: result.title,
-        hash: result.hash,
-        // For Image of the Day, include the date in the caption if available
-        caption: result.date 
-          ? `<a href="https://app.astrobin.com/i/${result.hash}" target="_blank" rel="nofollow">${result.title}</a> by <a href="https://app.astrobin.com/u/${result.user}" target="_blank" rel="nofollow">${result.user}</a><br/><em>Image of the Day: ${new Date(result.date).toLocaleDateString()}</em>`
-          : `<a href="https://app.astrobin.com/i/${result.hash}" target="_blank" rel="nofollow">${result.title}</a> by <a href="https://app.astrobin.com/u/${result.user}" target="_blank" rel="nofollow">${result.user}</a>`,
-        previewUrl: result.url_duckduckgo,
-        url: result.url_real,
-      }));
+      try {
+        const defaultArgs = {
+          limit: query.per_page,
+          type: "imageoftheday",
+        };
+        console.log("IOTD query:", query);
+        const finalQuery = { ...query, ...defaultArgs };
+        const mapFromInserterMediaRequest = {
+          per_page: "page_size",
+          page: "page",
+        };
+        const url = new URL(`${mosneAstroBin.apiUrl}/search`);
+        Object.entries(finalQuery).forEach(([key, value]) => {
+          const queryKey = mapFromInserterMediaRequest[key] || key;
+          if (value !== undefined && value !== null) {
+            url.searchParams.set(queryKey, value);
+          }
+        });
+
+        console.log("IOTD request URL:", url.toString());
+
+        const response = await window.fetch(url, {
+          credentials: "same-origin",
+          headers: {
+            "X-WP-Nonce": mosneAstroBin.nonce,
+          },
+        });
+
+        if (!response.ok) {
+          console.error(
+            "IOTD API error:",
+            response.status,
+            response.statusText
+          );
+          const errorText = await response.text();
+          console.error("Error details:", errorText);
+          return [];
+        }
+
+        const jsonResponse = await response.json();
+        console.log("IOTD response:", jsonResponse);
+
+        const results = jsonResponse.objects || [];
+        if (results.length === 0) {
+          console.log("No IOTD results found");
+          return [];
+        }
+
+        return results.map((result) => {
+          // Format date if available
+          let formattedDate = "";
+          if (result.date) {
+            try {
+              const dateObj = new Date(result.date);
+              formattedDate = dateObj.toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              });
+            } catch (e) {
+              formattedDate = result.date;
+            }
+          }
+
+          return {
+            sourceId: result.id,
+            id: undefined,
+            title: result.title || "Image of the Day",
+            hash: result.hash || "",
+            // For Image of the Day, include the date in the caption if available
+            caption: formattedDate
+              ? `<a href="https://app.astrobin.com/i/${result.hash}" target="_blank" rel="nofollow">${result.title}</a> by <a href="https://app.astrobin.com/u/${result.user}" target="_blank" rel="nofollow">${result.user}</a><br/><em>Image of the Day: ${formattedDate}</em>`
+              : `<a href="https://app.astrobin.com/i/${result.hash}" target="_blank" rel="nofollow">${result.title}</a> by <a href="https://app.astrobin.com/u/${result.user}" target="_blank" rel="nofollow">${result.user}</a>`,
+            previewUrl: result.url_regular,
+            url: result.url_real || result.url_hd,
+          };
+        });
+      } catch (error) {
+        console.error("Error fetching Image of the Day:", error);
+        return [];
+      }
     },
     getReportUrl: ({ sourceId }) =>
       `https://www.astrobin.com/api/v1/image/${sourceId}/`,
     isExternalResource: true,
   });
-  
+
   // Top Picks
-  wp.data.dispatch('core/block-editor').registerInserterMediaCategory({
+  wp.data.dispatch("core/block-editor").registerInserterMediaCategory({
     name: "astrobin-top-picks",
     labels: {
       name: __("AstroBin | Top Picks", "mosne-astrobin"),
@@ -236,8 +283,8 @@ if (typeof wp !== "undefined") {
         title: result.title,
         hash: result.hash,
         caption: `<a href="https://app.astrobin.com/i/${result.hash}" target="_blank" rel="nofollow">${result.title}</a> by <a href="https://app.astrobin.com/u/${result.user}" target="_blank" rel="nofollow">${result.user}</a>`,
-        previewUrl: result.url_duckduckgo,
-        url: result.url_real,
+        previewUrl: result.url_regular,
+        url: result.url_real || result.url_regular,
       }));
     },
     getReportUrl: ({ sourceId }) =>

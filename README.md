@@ -10,7 +10,7 @@ WordPress plugin to integrate AstroBin images into WordPress using the Media Lib
   - Your own AstroBin pictures
   - Public pictures (search by title)
   - Users' galleries (search by username)
-  - Image of the day
+  - Image of the Day (browse current and past featured images)
   - Top Picks
 - Secure storage of AstroBin API credentials
 
@@ -38,9 +38,16 @@ To use this plugin, you need to have an AstroBin account and create API credenti
    - "My pictures" to browse your own images
    - "Public pictures" to search public images by title
    - "Users' galleries" to browse images by username
-   - "Image of the day" to see featured images
+   - "Image of the day" to see current and past featured images
    - "Top Picks" to browse top-rated images
 5. Select an image to insert it into your post
+
+### Image of the Day
+
+The Image of the Day feature allows you to browse through AstroBin's featured images:
+- The first page shows the most recent Images of the Day
+- Navigate to other pages to see older featured images
+- Each image displays its featured date in the caption
 
 ## Development
 
@@ -60,6 +67,11 @@ npm run build
 ## API Reference
 
 This plugin uses the AstroBin REST API as documented at [welcome.astrobin.com/application-programming-interface](https://welcome.astrobin.com/application-programming-interface).
+
+The plugin specifically uses these endpoints:
+- `image/` - For browsing and searching images
+- `imageoftheday/` - For accessing Image of the Day features
+- `toppick/` - For accessing Top Picks
 
 ## License
 
