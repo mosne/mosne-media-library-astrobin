@@ -1,0 +1,21 @@
+{
+  "name": "mosne-media-library-astrobin",
+  "version": "1.0.0",
+  "description": "WordPress plugin to load your Astrobin images on your website",
+  "main": "build/editor.js",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "wordpress",
+    "astrobin",
+    "media-library"
+  ],
+  "author": "Mosne",
+  "license": "ISC",
+  "devDependencies": {
+    "@wordpress/scripts": "*"
+  }
+}
