@@ -16,6 +16,8 @@
   "author": "Mosne",
   "license": "ISC",
   "devDependencies": {
+    "@wordpress/block-editor": "*",
+    "@wordpress/i18n": "*",
     "@wordpress/scripts": "*"
   }
 }

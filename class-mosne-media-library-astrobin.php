@@ -102,12 +102,14 @@ class Mosne_Media_Library_AstroBin {
      */
     public function enqueue_admin_scripts( $hook ) {
         // Only load scripts in post editor
-        if ( $hook == 'post.php' || $hook == 'post-new.php' ) {
+        if ( $hook == 'post.php' || $hook == 'post-new.php' || $hook == 'site-editor.php' ) {
+            $asset_file = include MOSNE_ASTROBIN_PLUGIN_DIR . 'build/editor.asset.php';
+            
             wp_enqueue_script(
                 'mosne-astrobin-editor',
                 MOSNE_ASTROBIN_PLUGIN_URL . 'build/editor.js',
-                array( 'wp-blocks', 'wp-data', 'wp-block-editor' ),
-                MOSNE_ASTROBIN_VERSION,
+                $asset_file['dependencies'],
+                $asset_file['version'],
                 true
             );
             

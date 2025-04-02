@@ -41,13 +41,27 @@ class Mosne_AstroBin_API {
                 'permission_callback' => array( __CLASS__, 'api_permissions_check' ),
                 'args'                => array(
                     'term' => array(
-                        'required'          => true,
+                        'required'          => false,
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ),
+                    'username' => array(
+                        'required'          => false,
                         'sanitize_callback' => 'sanitize_text_field',
                     ),
                     'page_size' => array(
                         'required'          => false,
                         'sanitize_callback' => 'absint',
                         'default'           => 20,
+                    ),
+                    'page' => array(
+                        'required'          => false,
+                        'sanitize_callback' => 'absint',
+                        'default'           => 1,
+                    ),
+                    'type' => array(
+                        'required'          => false,
+                        'sanitize_callback' => 'sanitize_text_field',
+                        'default'           => 'my_pictures',
                     ),
                 ),
             )
@@ -71,12 +85,15 @@ class Mosne_AstroBin_API {
      */
     public static function search_images( $request ) {
         $search_term = $request->get_param( 'term' );
+        $username = $request->get_param( 'username' );
         $page_size = $request->get_param( 'page_size' );
+        $page = $request->get_param( 'page' );
+        $type = $request->get_param( 'type' );
         
         // Get API credentials
         $credentials = Mosne_AstroBin_Settings::get_api_credentials();
         
-        if ( empty( $credentials['username'] ) || empty( $credentials['api_key'] ) || empty( $credentials['api_secret'] ) ) {
+        if ( empty( $credentials['api_key'] ) || empty( $credentials['api_secret'] ) ) {
             return new WP_REST_Response(
                 array(
                     'error' => __( 'AstroBin API credentials are not configured.', 'mosne-media-library-astrobin' ),
@@ -85,14 +102,67 @@ class Mosne_AstroBin_API {
             );
         }
         
-        $api_response = self::make_api_request(
-            'image/',
-            array(
-                'title__icontains' => $search_term,
-                'user'             => $credentials['username'],
-                'limit'            => $page_size,
-            )
+        $params = array(
+            'limit' => $page_size,
         );
+        
+        // Calculate offset for pagination (if not IOTD)
+        if ( $page > 1 && $type !== 'image_of_the_day' ) {
+            $params['offset'] = ( $page - 1 ) * $page_size;
+        }
+        
+        // Add search parameters based on request type
+        switch ( $type ) {
+            case 'my_pictures':
+                // Search by current user and optional title
+                $params['user'] = $credentials['username'];
+                if ( ! empty( $search_term ) ) {
+                    $params['title__icontains'] = $search_term;
+                }
+                $endpoint = 'image/';
+                break;
+                
+            case 'public_pictures':
+                // Search public pictures by title
+                if ( ! empty( $search_term ) ) {
+                    $params['title__icontains'] = $search_term;
+                }
+                $endpoint = 'image/';
+                break;
+                
+            case 'user_gallery':
+                // Search by specified username
+                if ( ! empty( $username ) ) {
+                    $params['user'] = $username;
+                }
+                if ( ! empty( $search_term ) ) {
+                    $params['title__icontains'] = $search_term;
+                }
+                $endpoint = 'image/';
+                break;
+                
+            case 'image_of_the_day':
+                // Get Image of the Day
+                // For Image of the Day, offset and limit works differently
+                // limit=1 gets today's image, offset=1 gets yesterday's, etc.
+                if ( $page > 1 ) {
+                    $params['offset'] = $page - 1;
+                }
+                // We need to get multiple images but not too many as each requires an extra API call
+                $params['limit'] = min( $page_size, 10 );
+                $endpoint = 'imageoftheday/';
+                break;
+                
+            case 'top_picks':
+                // Get Top Picks
+                $endpoint = 'toppick/';
+                break;
+                
+            default:
+                $endpoint = 'image/';
+        }
+        
+        $api_response = self::make_api_request( $endpoint, $params );
         
         if ( is_wp_error( $api_response ) ) {
             return new WP_REST_Response(
@@ -107,19 +177,50 @@ class Mosne_AstroBin_API {
             'objects' => array(),
         );
         
-        if ( ! empty( $api_response->objects ) ) {
-            foreach ( $api_response->objects as $image ) {
-                $formatted_results['objects'][] = array(
-                    'id'           => $image->id,
-                    'title'        => $image->title,
-                    'user'         => $image->user,
-                    'hash'         => $image->hash,
-                    'url_regular'  => $image->url_regular,
-                    'url_thumb'    => $image->url_thumb,
-                    'url_duckduckgo' => isset($image->url_duckduckgo) ? $image->url_duckduckgo : $image->url_thumb,
-                    'url_real'     => isset($image->url_real) ? $image->url_real : $image->url_regular,
-                );
+        // Handle both single objects and collections
+        if ( isset( $api_response->objects ) && is_array( $api_response->objects ) ) {
+            $objects = $api_response->objects;
+            
+            // Special handling for imageoftheday
+            if ( $type === 'image_of_the_day' ) {
+                // For image of the day, we need to extract the actual image data
+                $iotd_objects = array();
+                foreach ( $objects as $iotd ) {
+                    if ( isset( $iotd->image ) ) {
+                        $image_response = self::make_api_request( 'image/' . $iotd->image . '/' );
+                        if ( ! is_wp_error( $image_response ) ) {
+                            // Add some IOTD specific data to the image
+                            $image_response->date = isset( $iotd->date ) ? $iotd->date : '';
+                            $iotd_objects[] = $image_response;
+                        }
+                    }
+                }
+                $objects = $iotd_objects;
             }
+        } elseif ( $type !== 'image_of_the_day' ) {
+            $objects = array( $api_response );
+        } else {
+            $objects = array();
+        }
+        
+        foreach ( $objects as $image ) {
+            // Skip if no data
+            if ( ! isset( $image->id ) ) {
+                continue;
+            }
+            
+            $formatted_results['objects'][] = array(
+                'id'           => $image->id,
+                'title'        => isset( $image->title ) ? $image->title : '',
+                'user'         => isset( $image->user ) ? $image->user : '',
+                'hash'         => isset( $image->hash ) ? $image->hash : '',
+                // Date field only for IOTD
+                'date'         => isset( $image->date ) ? $image->date : '',
+                'url_regular'  => isset( $image->url_regular ) ? $image->url_regular : '',
+                'url_thumb'    => isset( $image->url_thumb ) ? $image->url_thumb : '',
+                'url_duckduckgo' => isset( $image->url_duckduckgo ) ? $image->url_duckduckgo : (isset( $image->url_thumb ) ? $image->url_thumb : ''),
+                'url_real'     => isset( $image->url_real ) ? $image->url_real : (isset( $image->url_regular ) ? $image->url_regular : ''),
+            );
         }
         
         return new WP_REST_Response( $formatted_results );

@@ -1,19 +1,46 @@
 # Mosne Media Library AstroBin
 
-WordPress plugin to integrate your AstroBin images into WordPress using the Gutenberg editor.
+WordPress plugin to integrate AstroBin images into WordPress using the Media Library in the Gutenberg editor.
 
 ## Features
 
+- Integration with AstroBin API for searching and browsing images
+- Media Library integration within Gutenberg editor
+- Multiple browsing options:
+  - Your own AstroBin pictures
+  - Public pictures (search by title)
+  - Users' galleries (search by username)
+  - Image of the day
+  - Top Picks
 - Secure storage of AstroBin API credentials
-- Gutenberg editor integration with custom block
-- Search and insert AstroBin images directly in the editor
-- Configurable image sizes
 
 ## Installation
 
 1. Download or clone this repository to your WordPress plugins directory
 2. Activate the plugin through the WordPress admin interface
 3. Navigate to Settings > AstroBin to configure your API credentials
+
+## AstroBin API Credentials
+
+To use this plugin, you need to have an AstroBin account and create API credentials:
+
+1. Go to [AstroBin](https://www.astrobin.com/)
+2. Register or log in to your account
+3. Request an API Key from the [API Key request form](https://welcome.astrobin.com/application-programming-interface#request-key)
+4. Copy the API Key and API Secret to the plugin settings
+
+## Usage
+
+1. Configure your AstroBin credentials in Settings > AstroBin
+2. Edit a post or page using the Gutenberg editor
+3. Open the Media Library and look for the AstroBin categories
+4. Choose one of the browse options:
+   - "My pictures" to browse your own images
+   - "Public pictures" to search public images by title
+   - "Users' galleries" to browse images by username
+   - "Image of the day" to see featured images
+   - "Top Picks" to browse top-rated images
+5. Select an image to insert it into your post
 
 ## Development
 
@@ -30,25 +57,9 @@ npm run start
 npm run build
 ```
 
-## AstroBin API Credentials
+## API Reference
 
-To use this plugin, you need to have an AstroBin account and create API credentials:
-
-1. Go to [AstroBin](https://www.astrobin.com/)
-2. Register or log in to your account
-3. Navigate to Settings > API Keys
-4. Create a new API key
-5. Copy the API Key and API Secret to the plugin settings
-
-## Usage
-
-1. Configure your AstroBin credentials in Settings > AstroBin
-2. Edit a post or page using the Gutenberg editor
-3. Add a new block and search for "AstroBin"
-4. Insert the AstroBin Image block
-5. Search for your images using the search box
-6. Select an image to insert it into your post
-7. Configure image size and caption in the block settings
+This plugin uses the AstroBin REST API as documented at [welcome.astrobin.com/application-programming-interface](https://welcome.astrobin.com/application-programming-interface).
 
 ## License
 
