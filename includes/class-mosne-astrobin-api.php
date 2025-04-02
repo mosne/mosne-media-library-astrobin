@@ -150,14 +150,17 @@ class Mosne_AstroBin_API {
                 $endpoint = 'image/';
                 break;
                 
-            case 'top_picks':
-                // Get Top Picks
-                $endpoint = 'toppick/';
-                break;
-                
             case 'imageoftheday':
                 // Image of the Day
                 $endpoint = 'imageoftheday/';
+                break;
+                
+            case 'by_subject':
+                // Search by astronomical subject
+                $endpoint = 'image/';
+                if ( ! empty( $search_term ) ) {
+                    $params['subjects'] = $search_term;
+                }
                 break;
                 
             default:
@@ -218,8 +221,6 @@ class Mosne_AstroBin_API {
                                 'date'          => isset( $iotd->date ) ? $iotd->date : '',
                                 'url_regular'   => isset( $image_response->url_regular ) ? $image_response->url_regular : '',
                                 'url_thumb'     => isset( $image_response->url_thumb ) ? $image_response->url_thumb : '',
-                                'url_duckduckgo' => isset( $image_response->url_duckduckgo ) ? $image_response->url_duckduckgo : 
-                                                    (isset( $image_response->url_thumb ) ? $image_response->url_thumb : ''),
                                 'url_real'      => isset( $image_response->url_real ) ? $image_response->url_real : 
                                                     (isset( $image_response->url_regular ) ? $image_response->url_regular : ''),
                                 'url_hd'        => isset( $image_response->url_hd ) ? $image_response->url_hd : '',
@@ -249,8 +250,6 @@ class Mosne_AstroBin_API {
                     'hash'         => isset( $image->hash ) ? $image->hash : '',
                     'url_regular'  => isset( $image->url_regular ) ? $image->url_regular : '',
                     'url_thumb'    => isset( $image->url_thumb ) ? $image->url_thumb : '',
-                    'url_duckduckgo' => isset( $image->url_duckduckgo ) ? $image->url_duckduckgo : 
-                                         (isset( $image->url_thumb ) ? $image->url_thumb : ''),
                     'url_real'     => isset( $image->url_real ) ? $image->url_real : 
                                       (isset( $image->url_regular ) ? $image->url_regular : ''),
                     'url_hd'       => isset( $image->url_hd ) ? $image->url_hd : '',
