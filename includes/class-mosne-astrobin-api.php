@@ -153,6 +153,7 @@ class Mosne_AstroBin_API {
             case 'imageoftheday':
                 // Image of the Day
                 $endpoint = 'imageoftheday/';
+                
                 break;
                 
             case 'by_subject':
@@ -196,7 +197,9 @@ class Mosne_AstroBin_API {
             // Handle Image of the Day response format
             if ( ! empty( $api_response->objects ) && is_array( $api_response->objects ) ) {
                 error_log('IOTD entries found: ' . count($api_response->objects));
-                
+                // Limit the number of IOTD entries to 5
+                $api_response->objects = array_slice($api_response->objects, 0, 2);
+
                 foreach ( $api_response->objects as $iotd ) {
                     if ( ! empty( $iotd->image ) ) {
                         // Extract the image ID from the path

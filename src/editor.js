@@ -155,7 +155,7 @@ if (typeof wp !== "undefined") {
     name: "astrobin-by-subject",
     labels: {
       name: __("AstroBin | By subject", "mosne-astrobin"),
-      search_items: __("Search by subject (e.g. M31)", "mosne-astrobin"),
+      search_items: __("Search by subject", "mosne-astrobin"),
     },
     mediaType: "image",
     async fetch(query = {}) {
