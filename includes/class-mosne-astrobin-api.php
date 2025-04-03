@@ -74,29 +74,11 @@ class Mosne_AstroBin_API {
      * @return bool
      */
     public static function api_permissions_check() {
-        // Check if user is logged in and can edit posts
-        if (current_user_can('edit_posts')) {
-            return true;
-        }
+        // Only allow authenticated users with proper capabilities
+        return current_user_can( 'edit_posts' );
         
-        // For debugging purposes - Allow all requests temporarily
-        return true;
-        
-        // Note: Remove the line above and use one of these more secure approaches for production:
-        
-        // Option 1: Check for a valid nonce for authenticated requests
-        // if (isset($_SERVER['HTTP_X_WP_NONCE'])) {
-        //     $nonce = sanitize_text_field($_SERVER['HTTP_X_WP_NONCE']);
-        //     if (wp_verify_nonce($nonce, 'wp_rest')) {
-        //         return true;
-        //     }
-        // }
-        
-        // Option 2: Allow read-only access for all users
-        // return true;
-        
-        // Option 3: Custom capability check
-        // return apply_filters('mosne_astrobin_api_permission', current_user_can('read'));
+        // For development environments, you can use filters to modify this behavior:
+        // return apply_filters( 'mosne_astrobin_api_permission', current_user_can( 'edit_posts' ) );
     }
 
     /**
@@ -130,16 +112,12 @@ class Mosne_AstroBin_API {
         );
         
         // Determine endpoint based on type
+        $endpoint = 'image/';
+        
         switch ( $type ) {
             case 'my_pictures':
-                // Search by current user and optional title
+                // Search by current user
                 $params['user'] = $credentials['username'];
-                $endpoint = 'image/';
-                break;
-                
-            case 'public_pictures':
-                // Search public pictures
-                $endpoint = 'image/';
                 break;
                 
             case 'user_gallery':
@@ -147,25 +125,19 @@ class Mosne_AstroBin_API {
                 if ( ! empty( $username ) ) {
                     $params['user'] = $username;
                 }
-                $endpoint = 'image/';
                 break;
                 
             case 'imageoftheday':
                 // Image of the Day
                 $endpoint = 'imageoftheday/';
-                
                 break;
                 
             case 'by_subject':
                 // Search by astronomical subject
-                $endpoint = 'image/';
                 if ( ! empty( $search_term ) ) {
                     $params['subjects'] = $search_term;
                 }
                 break;
-                
-            default:
-                $endpoint = 'image/';
         }
         
         // Add search term if provided (for endpoints that support it)
@@ -183,7 +155,6 @@ class Mosne_AstroBin_API {
         $api_response = self::make_api_request( $endpoint, $params );
         
         if ( is_wp_error( $api_response ) ) {
-            error_log('AstroBin API error: ' . $api_response->get_error_message());
             return new WP_REST_Response(
                 array(
                     'error' => $api_response->get_error_message(),
@@ -194,73 +165,103 @@ class Mosne_AstroBin_API {
         
         // Process results based on endpoint type
         if ( $endpoint === 'imageoftheday/' ) {
-            // Handle Image of the Day response format
-            if ( ! empty( $api_response->objects ) && is_array( $api_response->objects ) ) {
-                error_log('IOTD entries found: ' . count($api_response->objects));
-                // Limit the number of IOTD entries to 5
-                $api_response->objects = array_slice($api_response->objects, 0, 2);
-
-                foreach ( $api_response->objects as $iotd ) {
-                    if ( ! empty( $iotd->image ) ) {
-                        // Extract the image ID from the path
-                        $image_path = $iotd->image;
-                        // Handle both formats: "/api/v1/image/1ucvr7/" and "1ucvr7"
-                        if (preg_match('|/api/v1/image/([^/]+)|', $image_path, $matches)) {
-                            $image_id = $matches[1];
-                        } else {
-                            $image_id = basename(rtrim($image_path, '/'));
-                        }
-                        
-                        // Get the image details
-                        $image_response = self::make_api_request( 'image/' . $image_id . '/', array() );
-                        
-                        if ( ! is_wp_error( $image_response ) && is_object( $image_response ) ) {
-                            // Add the image to results with IOTD date
-                            $formatted_results['objects'][] = array(
-                                'id'            => $image_response->id,
-                                'title'         => isset( $image_response->title ) ? $image_response->title : '',
-                                'user'          => isset( $image_response->user ) ? $image_response->user : '',
-                                'hash'          => isset( $image_response->hash ) ? $image_response->hash : '',
-                                'date'          => isset( $iotd->date ) ? $iotd->date : '',
-                                'url_regular'   => isset( $image_response->url_regular ) ? $image_response->url_regular : '',
-                                'url_thumb'     => isset( $image_response->url_thumb ) ? $image_response->url_thumb : '',
-                                'url_real'      => isset( $image_response->url_real ) ? $image_response->url_real : 
-                                                    (isset( $image_response->url_regular ) ? $image_response->url_regular : ''),
-                                'url_hd'        => isset( $image_response->url_hd ) ? $image_response->url_hd : '',
-                            );
-                        }
-                    }
-                }
-            }
+            self::process_imageoftheday_results( $api_response, $formatted_results );
         } else {
-            // Process results for other API endpoints
-            if ( isset( $api_response->objects ) && is_array( $api_response->objects ) ) {
-                $objects = $api_response->objects;
-            } else {
-                $objects = array( $api_response );
-            }
-            
-            foreach ( $objects as $image ) {
-                // Skip if no data
-                if ( ! isset( $image->id ) ) {
-                    continue;
-                }
-                
-                $formatted_results['objects'][] = array(
-                    'id'           => $image->id,
-                    'title'        => isset( $image->title ) ? $image->title : '',
-                    'user'         => isset( $image->user ) ? $image->user : '',
-                    'hash'         => isset( $image->hash ) ? $image->hash : '',
-                    'url_regular'  => isset( $image->url_regular ) ? $image->url_regular : '',
-                    'url_thumb'    => isset( $image->url_thumb ) ? $image->url_thumb : '',
-                    'url_real'     => isset( $image->url_real ) ? $image->url_real : 
-                                      (isset( $image->url_regular ) ? $image->url_regular : ''),
-                    'url_hd'       => isset( $image->url_hd ) ? $image->url_hd : '',
-                );
-            }
+            self::process_standard_results( $api_response, $formatted_results );
         }
         
         return new WP_REST_Response( $formatted_results );
+    }
+    
+    /**
+     * Process Image of the Day results
+     *
+     * @param object $api_response The API response.
+     * @param array  $formatted_results Results array to populate.
+     */
+    private static function process_imageoftheday_results( $api_response, &$formatted_results ) {
+        if ( empty( $api_response->objects ) || ! is_array( $api_response->objects ) ) {
+            return;
+        }
+        
+        // Limit the number of IOTD entries to 2 for better performance
+        $api_response->objects = array_slice( $api_response->objects, 0, 2 );
+
+        foreach ( $api_response->objects as $iotd ) {
+            if ( empty( $iotd->image ) ) {
+                continue;
+            }
+            
+            // Extract the image ID from the path
+            $image_id = self::extract_image_id( $iotd->image );
+            if ( ! $image_id ) {
+                continue;
+            }
+            
+            // Get the image details
+            $image_response = self::make_api_request( 'image/' . $image_id . '/', array() );
+            
+            if ( ! is_wp_error( $image_response ) && is_object( $image_response ) ) {
+                $formatted_results['objects'][] = self::format_image_data( $image_response, $iotd->date ?? '' );
+            }
+        }
+    }
+    
+    /**
+     * Process standard image results
+     *
+     * @param object $api_response The API response.
+     * @param array  $formatted_results Results array to populate.
+     */
+    private static function process_standard_results( $api_response, &$formatted_results ) {
+        $objects = isset( $api_response->objects ) && is_array( $api_response->objects ) 
+            ? $api_response->objects 
+            : array( $api_response );
+        
+        foreach ( $objects as $image ) {
+            // Skip if no data
+            if ( ! isset( $image->id ) ) {
+                continue;
+            }
+            
+            $formatted_results['objects'][] = self::format_image_data( $image );
+        }
+    }
+    
+    /**
+     * Format image data for consistent output
+     *
+     * @param object $image The image data.
+     * @param string $date Optional date for IOTD.
+     * @return array Formatted image data.
+     */
+    private static function format_image_data( $image, $date = '' ) {
+        return array(
+            'id'          => $image->id,
+            'title'       => isset( $image->title ) ? $image->title : '',
+            'user'        => isset( $image->user ) ? $image->user : '',
+            'hash'        => isset( $image->hash ) ? $image->hash : '',
+            'date'        => $date,
+            'url_regular' => isset( $image->url_regular ) ? $image->url_regular : '',
+            'url_thumb'   => isset( $image->url_thumb ) ? $image->url_thumb : '',
+            'url_real'    => isset( $image->url_real ) ? $image->url_real : 
+                             (isset( $image->url_regular ) ? $image->url_regular : ''),
+            'url_hd'      => isset( $image->url_hd ) ? $image->url_hd : '',
+        );
+    }
+    
+    /**
+     * Extract image ID from AstroBin path
+     *
+     * @param string $image_path The image path.
+     * @return string|null The extracted image ID or null.
+     */
+    private static function extract_image_id( $image_path ) {
+        if ( preg_match( '|/api/v1/image/([^/]+)|', $image_path, $matches ) ) {
+            return $matches[1];
+        } 
+        
+        return basename( rtrim( $image_path, '/' ) );
     }
 
     /**
@@ -280,29 +281,27 @@ class Mosne_AstroBin_API {
         
         $request_url = self::API_BASE_URL . $endpoint . '?' . http_build_query( $params );
         
-        // Log the URL for debugging (remove sensitive data in production)
-        $log_url = preg_replace('/api_secret=[^&]*/', 'api_secret=REDACTED', $request_url);
-        error_log('AstroBin API request: ' . $log_url);
+        // Remove sensitive data for logging
+        $log_url = preg_replace( '/api_secret=[^&]*/', 'api_secret=REDACTED', $request_url );
         
         $response = wp_remote_get(
             $request_url,
             array(
                 'timeout'     => 15,
                 'httpversion' => '1.1',
+                'headers'     => array(
+                    'User-Agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . get_bloginfo( 'url' ),
+                ),
             )
         );
         
         if ( is_wp_error( $response ) ) {
-            error_log('AstroBin API wp_error: ' . $response->get_error_message());
             return $response;
         }
         
         $response_code = wp_remote_retrieve_response_code( $response );
         
         if ( 200 !== $response_code ) {
-            error_log('AstroBin API error code: ' . $response_code);
-            error_log('AstroBin API error body: ' . wp_remote_retrieve_body($response));
-            
             return new WP_Error(
                 'astrobin_api_error',
                 sprintf(
@@ -314,15 +313,7 @@ class Mosne_AstroBin_API {
         }
         
         $body = wp_remote_retrieve_body( $response );
-        $decoded = json_decode( $body );
         
-        // Log response summary
-        if (is_object($decoded)) {
-            error_log('AstroBin API response received successfully');
-        } else {
-            error_log('AstroBin API response could not be decoded: ' . substr($body, 0, 100) . '...');
-        }
-        
-        return $decoded;
+        return json_decode( $body );
     }
 } 

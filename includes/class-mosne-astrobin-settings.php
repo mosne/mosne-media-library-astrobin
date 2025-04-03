@@ -87,6 +87,12 @@ class Mosne_AstroBin_Settings {
                 submit_button();
             ?>
             </form>
+            <p>
+                <?php echo esc_html__( 'This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.', 'mosne-media-library-astrobin' ); ?>
+            </p>
+            <p>
+                <?php echo esc_html__( 'AstroBin is a trademark of AstroBin Ltd.', 'mosne-media-library-astrobin' ); ?>
+            </p>
         </div>
         <?php
     }

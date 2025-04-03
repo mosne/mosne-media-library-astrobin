@@ -1,6 +1,6 @@
 # Mosne Media Library AstroBin
 
-WordPress plugin to integrate AstroBin images into WordPress using the Media Library in the Gutenberg editor.
+WordPress plugin to integrate AstroBin images into WordPress using the Media Library in the Gutenberg editor. This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.
 
 ## Features
 
@@ -75,4 +75,6 @@ The plugin specifically uses these endpoints:
 
 ## License
 
-This plugin is licensed under the ISC License.
+This plugin is licensed under the Gpl2 licence
+This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.
+AstroBin is a trademark of AstroBin Ltd.
