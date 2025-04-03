@@ -55,6 +55,9 @@ class Mosne_Media_Library_AstroBin {
         
         // Initialize the API
         Mosne_AstroBin_API::init();
+        
+        // Add hook for modifying attachment titles
+        add_action( 'add_attachment', array( $this, 'modify_attachment_title' ) );
     }
 
     /**
@@ -124,6 +127,45 @@ class Mosne_Media_Library_AstroBin {
             );
         }
     }
+
+    /**
+     * Modify the attachment title when an image is uploaded
+     *
+     * @param int $attachment_id The ID of the newly uploaded attachment
+     */
+    public function modify_attachment_title( $attachment_id ) {
+        // Check if this is an image attachment
+        if ( wp_attachment_is_image( $attachment_id ) ) {
+            // Get attachment metadata
+            $attachment = get_post( $attachment_id );
+
+            // if the post_excerpt is empty, return
+            if ( empty( $attachment->post_excerpt ) ) {
+                return;
+            }
+
+            //if the post_excerpt is not empty, but dont contain the word "astrobin", return
+            if ( strpos( $attachment->post_excerpt, 'astrobin' ) === false ) {
+                return;
+            }
+
+            // Example: Add prefix to title or modify it based on some logic
+            // the the title form the excpert of the image
+            
+            $title_part = explode( '©', $attachment->post_excerpt )[0];
+            $new_title = wp_strip_all_tags( $title_part );
+            
+            // You could also get info from AstroBin API here if needed
+            // $astrobin_data = Mosne_AstroBin_API::get_image_data($some_identifier);
+            // $new_title = $astrobin_data['title'];
+            
+            // Update the attachment title
+            wp_update_post( array(
+                'ID' => $attachment_id,
+                'post_title' => $new_title
+            ) );
+        }
+    }
 }
 
 // Initialize the plugin
@@ -131,3 +173,4 @@ function mosne_media_library_astrobin_init() {
     Mosne_Media_Library_AstroBin::get_instance();
 }
 add_action( 'plugins_loaded', 'mosne_media_library_astrobin_init' ); 
+

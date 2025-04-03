@@ -167,8 +167,15 @@ if (typeof wp !== "undefined") {
   registerAstrobinCategory(
     "astrobin-by-subject",
     __("AstroBin | By Subject", "mosne-astrobin"),
-    __("Search by subject (e.g. M31)", "mosne-astrobin"),
+    __("Search by subject", "mosne-astrobin"),
     { type: "by_subject" }
+  );
+
+  registerAstrobinCategory(
+    "astrobin-by-hash",
+    __("AstroBin | By Image Hash", "mosne-astrobin"),
+    __("Search by hash (ID)", "mosne-astrobin"),
+    { type: "by_hash" }
   );
 
   registerAstrobinCategory(

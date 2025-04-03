@@ -138,6 +138,13 @@ class Mosne_AstroBin_API {
                     $params['subjects'] = $search_term;
                 }
                 break;
+
+            case 'by_hash':
+                // Search by image hash
+                if ( ! empty( $search_term ) ) {
+                    $endpoint = 'image/' . $search_term . '/';
+                }
+                break;
         }
         
         // Add search term if provided (for endpoints that support it)
@@ -166,6 +173,8 @@ class Mosne_AstroBin_API {
         // Process results based on endpoint type
         if ( $endpoint === 'imageoftheday/' ) {
             self::process_imageoftheday_results( $api_response, $formatted_results );
+        } else if ( $type === 'by_hash' && ! empty( $search_term ) ) {
+            self::process_by_hash_results( $api_response, $formatted_results );
         } else {
             self::process_standard_results( $api_response, $formatted_results );
         }
@@ -226,6 +235,20 @@ class Mosne_AstroBin_API {
             
             $formatted_results['objects'][] = self::format_image_data( $image );
         }
+    }
+
+    /** 
+     * Process by hash results
+     *
+     * @param object $api_response The API response.
+     * @param array  $formatted_results Results array to populate.
+     */
+    private static function process_by_hash_results( $api_response, &$formatted_results ) {
+        if ( empty( $api_response->id ) ) {
+            return;
+        }
+        
+        $formatted_results['objects'][] = self::format_image_data( $api_response );
     }
     
     /**

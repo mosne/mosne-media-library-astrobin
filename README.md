@@ -5,14 +5,15 @@ WordPress plugin to integrate AstroBin images into WordPress using the Media Lib
 ## Features
 
 - Integration with AstroBin API for searching and browsing images
+- Secure storage of AstroBin API credentials
 - Media Library integration within Gutenberg editor
 - Multiple browsing options:
   - Your own AstroBin pictures
   - Public pictures (search by title)
   - Users' galleries (search by username)
+  - Image Hash (ID)  
   - Image of the Day (browse current and past featured images)
-  - Top Picks
-- Secure storage of AstroBin API credentials
+
 
 
 ## Installation
@@ -76,5 +77,5 @@ The plugin specifically uses these endpoints:
 
 ## License
 
-This plugin is licensed under the Gpl2 licence
+This plugin is licensed under the GNU GPL 2.0 licence 
 This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.
