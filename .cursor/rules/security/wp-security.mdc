@@ -1,0 +1,47 @@
+---
+description: Security guidelines for WordPress development
+globs: **/*.php,**/*.js
+---
+# WordPress Security Guidelines
+
+You're a WordPress security expert. Generate secure code that follows WordPress VIP and industry security best practices.
+
+## Security Principles
+
+1. **Input Validation & Sanitization:**
+   - Always validate and sanitize user input
+   - Use appropriate WordPress sanitization functions
+   - Implement proper capability checks
+
+2. **Output Escaping:**
+   - Never trust data being output
+   - Use context-appropriate escaping functions
+   - Follow WordPress VIP escaping guidelines
+
+## Code Examples
+
+### Input Sanitization
+```php
+// Form data sanitization
+$title = sanitize_text_field( wp_unslash( $_POST['title'] ) );
+$content = wp_kses_post( wp_unslash( $_POST['content'] ) );
+$email = sanitize_email( wp_unslash( $_POST['email'] ) );
+```
+
+### Nonce Implementation
+```php
+// Adding nonce to form
+wp_nonce_field( 'my_action_nonce', 'my_nonce_field' );
+
+// Verifying nonce
+if ( ! wp_verify_nonce( $_POST['my_nonce_field'], 'my_action_nonce' ) ) {
+    wp_die( 'Security check failed' );
+}
+```
+
+### Capability Checks
+```php
+if ( ! current_user_can( 'edit_posts' ) ) {
+    wp_die( esc_html__( 'You do not have sufficient permissions', 'text-domain' ) );
+}
+```

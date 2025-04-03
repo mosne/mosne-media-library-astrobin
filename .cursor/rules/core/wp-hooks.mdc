@@ -1,0 +1,238 @@
+---
+description: Guidelines for WordPress hooks implementation
+globs: **/*.php
+alwaysApply: false
+---
+# WordPress Hooks System Guidelines
+
+You're a WordPress hooks expert. Generate code that properly implements WordPress actions and filters following best practices for the WordPress hooks system.
+
+## General Guidelines
+
+1. **Naming Conventions:**
+   - Use descriptive, unique names
+   - Follow WordPress naming patterns (`{prefix}_{action_name}`)
+   - Include plugin/theme prefix for custom hooks
+   - Use verb-object pattern for actions (e.g., `prefix_update_post`)
+   - Use noun-adjective pattern for filters (e.g., `prefix_post_content`)
+
+2. **Documentation:**
+   - Document all hooks with PHPDoc
+   - Explain hook purpose and context
+   - Document all parameters with types
+   - Include usage examples
+   - Note when hooks were added with `@since`
+
+3. **Hook Implementation:**
+   - Use appropriate priority (default: 10)
+   - Specify correct number of parameters
+   - Keep callback functions focused and small
+   - Return proper values from filter callbacks
+   - Use proper parameter naming in callbacks
+
+4. **Hook Organization:**
+   - Group related hooks together
+   - Use consistent hook patterns across your codebase
+   - Consider hook execution order
+   - Document hook dependencies
+   - Use conditional hooks when appropriate
+
+5. **Performance Considerations:**
+   - Avoid expensive operations in frequently fired hooks
+   - Remove hooks when no longer needed
+   - Use `has_action()` or `has_filter()` to check before execution
+   - Consider using the `all` hook for debugging only
+
+## Code Examples
+
+### Action Registration and Execution
+```php
+/**
+ * Fires after a user has been registered.
+ *
+ * @since 1.0.0
+ *
+ * @param int   $user_id  The user ID.
+ * @param array $userdata The user data.
+ */
+do_action( 'prefix_after_user_registration', $user_id, $userdata );
+
+// Hook implementation with priority and parameter count
+add_action( 'prefix_after_user_registration', 'prefix_send_welcome_email', 10, 2 );
+
+/**
+ * Sends a welcome email to newly registered users.
+ *
+ * @since 1.0.0
+ *
+ * @param int   $user_id  The user ID.
+ * @param array $userdata The user data.
+ * @return void
+ */
+function prefix_send_welcome_email( $user_id, $userdata ) {
+    $user = get_userdata( $user_id );
+    
+    if ( ! $user ) {
+        return;
+    }
+    
+    $to = $user->user_email;
+    $subject = sprintf( 'Welcome to %s', get_bloginfo( 'name' ) );
+    $message = sprintf( 'Hello %s, thank you for registering!', $user->display_name );
+    
+    wp_mail( $to, $subject, $message );
+}
+```
+
+### Filter Registration and Implementation
+```php
+/**
+ * Filters the post content before display.
+ *
+ * @since 1.0.0
+ *
+ * @param string $content The post content.
+ * @return string Modified content.
+ */
+$content = apply_filters( 'prefix_modify_content', $content );
+
+// Filter implementation
+add_filter( 'prefix_modify_content', 'prefix_add_disclaimer' );
+
+/**
+ * Adds a disclaimer to the post content.
+ *
+ * @since 1.0.0
+ *
+ * @param string $content The post content.
+ * @return string Modified content with disclaimer.
+ */
+function prefix_add_disclaimer( $content ) {
+    if ( ! is_single() ) {
+        return $content;
+    }
+    
+    $disclaimer = '<div class="disclaimer">Disclaimer: This content is provided for informational purposes only.</div>';
+    
+    return $content . $disclaimer;
+}
+```
+
+### Removing Hooks
+```php
+// Remove a hook completely
+remove_action( 'wp_head', 'wp_generator' );
+
+// Remove a specific callback
+remove_filter( 'the_content', 'prefix_add_disclaimer' );
+
+// Remove a callback with specific priority
+remove_action( 'init', 'prefix_register_post_types', 20 );
+```
+
+### Conditional Hook Registration
+```php
+// Register hooks conditionally
+if ( is_admin() ) {
+    add_action( 'admin_menu', 'prefix_add_admin_menu' );
+    add_action( 'admin_enqueue_scripts', 'prefix_admin_scripts' );
+} else {
+    add_action( 'wp_enqueue_scripts', 'prefix_frontend_scripts' );
+    add_filter( 'the_content', 'prefix_modify_content' );
+}
+```
+
+### Class-Based Hook Implementation
+```php
+/**
+ * Feature handler class.
+ */
+class Prefix_Feature {
+    /**
+     * Constructor.
+     */
+    public function __construct() {
+        $this->init_hooks();
+    }
+    
+    /**
+     * Initialize hooks.
+     *
+     * @return void
+     */
+    private function init_hooks() {
+        // Actions
+        add_action( 'init', array( $this, 'register_post_types' ) );
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+        
+        // Filters
+        add_filter( 'the_title', array( $this, 'modify_title' ) );
+        add_filter( 'the_content', array( $this, 'modify_content' ) );
+    }
+    
+    /**
+     * Registers custom post types.
+     *
+     * @return void
+     */
+    public function register_post_types() {
+        // Registration code
+    }
+    
+    /**
+     * Enqueues scripts and styles.
+     *
+     * @return void
+     */
+    public function enqueue_scripts() {
+        // Enqueue code
+    }
+    
+    /**
+     * Modifies the post title.
+     *
+     * @param string $title The post title.
+     * @return string Modified title.
+     */
+    public function modify_title( $title ) {
+        // Modification code
+        return $title;
+    }
+    
+    /**
+     * Modifies the post content.
+     *
+     * @param string $content The post content.
+     * @return string Modified content.
+     */
+    public function modify_content( $content ) {
+        // Modification code
+        return $content;
+    }
+}
+
+// Initialize the feature
+new Prefix_Feature();
+```
+
+### Hook Debugging
+```php
+/**
+ * Debug all hooks as they fire.
+ *
+ * @param string $tag  The hook name.
+ * @param array  $args The hook arguments.
+ * @return mixed The first argument or array of arguments.
+ */
+function prefix_debug_all_hooks( $tag, $args ) {
+    // Only log in WP_DEBUG mode
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( sprintf( 'Hook: %s / Args: %s', $tag, print_r( $args, true ) ) );
+    }
+    
+    return $args[0] ?? $args;
+}
+
+// Add to all hooks (use only for debugging)
+add_action( 'all', 'prefix_debug_all_hooks', 1, 2 );
+```

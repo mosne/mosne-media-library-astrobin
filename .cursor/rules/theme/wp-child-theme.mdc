@@ -1,0 +1,409 @@
+---
+description: Guidelines for child theme development in WordPress
+globs: **/*.php,**/*.css,style.css,functions.php
+alwaysApply: false
+---
+# WordPress Child Theme Development Guidelines
+
+You're a WordPress child theme development expert. Generate code that properly implements child themes following best practices.
+
+## General Guidelines
+
+1. **Child Theme Structure:**
+   - Create proper directory structure
+   - Include required files (style.css, functions.php)
+   - Follow WordPress naming conventions
+   - Reference parent theme correctly
+   - Document theme dependencies
+
+2. **Style Inheritance:**
+   - Properly enqueue parent theme styles
+   - Override styles selectively
+   - Use specificity appropriately
+   - Implement responsive design
+   - Consider browser compatibility
+
+3. **Template Overrides:**
+   - Copy only necessary template files
+   - Maintain template hierarchy
+   - Keep parent theme hooks
+   - Document template changes
+   - Consider future parent theme updates
+
+4. **Functions Integration:**
+   - Avoid duplicating parent theme functions
+   - Use appropriate hooks and filters
+   - Implement proper prefixing
+   - Consider load order
+   - Document function purposes
+
+## Code Examples
+
+### Basic Child Theme Structure
+```
+child-theme/
+├── style.css
+├── functions.php
+├── screenshot.png
+└── templates/
+    └── (optional template overrides)
+```
+
+### Child Theme style.css
+```css
+/*
+Theme Name: Parent Theme Child
+Theme URI: https://example.com/parent-theme-child/
+Description: A child theme for Parent Theme
+Author: Your Name
+Author URI: https://example.com/
+Template: parent-theme
+Version: 1.0.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: parent-theme-child
+*/
+
+/* Import parent theme styles */
+/* Note: This method is deprecated. Use wp_enqueue_scripts in functions.php instead */
+/* @import url("../parent-theme/style.css"); */
+
+/* Child theme custom styles */
+.site-header {
+    background-color: #f8f8f8;
+}
+
+.site-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.main-navigation {
+    border-bottom: 2px solid #e0e0e0;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .site-title {
+        font-size: 2rem;
+    }
+}
+```
+
+### Child Theme functions.php
+```php
+<?php
+/**
+ * Parent Theme Child functions and definitions
+ *
+ * @link https://developer.wordpress.org/themes/basics/theme-functions/
+ *
+ * @package Parent_Theme_Child
+ */
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Define constants
+ */
+define( 'CHILD_THEME_VERSION', '1.0.0' );
+define( 'CHILD_THEME_DIR', get_stylesheet_directory() );
+define( 'CHILD_THEME_URI', get_stylesheet_directory_uri() );
+
+/**
+ * Enqueue scripts and styles.
+ */
+function parent_theme_child_scripts() {
+    // Enqueue parent theme stylesheet
+    wp_enqueue_style( 
+        'parent-theme-style', 
+        get_template_directory_uri() . '/style.css',
+        array(),
+        wp_get_theme( get_template() )->get( 'Version' )
+    );
+
+    // Enqueue child theme stylesheet
+    wp_enqueue_style( 
+        'parent-theme-child-style',
+        get_stylesheet_uri(),
+        array( 'parent-theme-style' ),
+        CHILD_THEME_VERSION
+    );
+
+    // Enqueue child theme script
+    wp_enqueue_script(
+        'parent-theme-child-script',
+        CHILD_THEME_URI . '/js/custom.js',
+        array( 'jquery' ),
+        CHILD_THEME_VERSION,
+        true
+    );
+}
+add_action( 'wp_enqueue_scripts', 'parent_theme_child_scripts' );
+
+/**
+ * Add child theme setup function.
+ */
+function parent_theme_child_setup() {
+    // Make child theme available for translation.
+    load_child_theme_textdomain( 'parent-theme-child', CHILD_THEME_DIR . '/languages' );
+}
+add_action( 'after_setup_theme', 'parent_theme_child_setup' );
+
+/**
+ * Add custom image sizes.
+ */
+function parent_theme_child_image_sizes() {
+    add_image_size( 'child-featured', 1200, 600, true );
+}
+add_action( 'after_setup_theme', 'parent_theme_child_image_sizes', 15 );
+
+/**
+ * Modify parent theme functionality.
+ */
+function parent_theme_child_modify_parent_theme() {
+    // Remove a parent theme action
+    remove_action( 'wp_head', 'parent_theme_custom_header', 20 );
+    
+    // Add a modified version of the parent theme function
+    add_action( 'wp_head', 'parent_theme_child_custom_header', 20 );
+}
+add_action( 'init', 'parent_theme_child_modify_parent_theme' );
+
+/**
+ * Custom header function that replaces parent theme version.
+ */
+function parent_theme_child_custom_header() {
+    // Modified implementation of the parent theme function
+    echo '<meta name="theme-modified" content="Parent Theme Child">';
+}
+
+/**
+ * Add custom footer text.
+ *
+ * @param string $footer_text The footer text from the parent theme.
+ * @return string Modified footer text.
+ */
+function parent_theme_child_footer_text( $footer_text ) {
+    $footer_text = sprintf(
+        esc_html__( 'Customized by %1$s', 'parent-theme-child' ),
+        '<a href="https://example.com/">Your Name</a>'
+    );
+    
+    return $footer_text;
+}
+add_filter( 'parent_theme_footer_text', 'parent_theme_child_footer_text' );
+
+/**
+ * Include additional files.
+ */
+require_once CHILD_THEME_DIR . '/inc/custom-functions.php';
+```
+
+### Template Override Example (content-single.php)
+```php
+<?php
+/**
+ * Template part for displaying single posts
+ *
+ * @link https://developer.wordpress.org/themes/basics/template-hierarchy/
+ *
+ * @package Parent_Theme_Child
+ */
+
+// Get the parent theme template content
+$parent_template = get_template_directory() . '/template-parts/content-single.php';
+
+// If the parent template exists, include it
+if ( file_exists( $parent_template ) ) {
+    include $parent_template;
+} else {
+    // Fallback implementation if parent template doesn't exist
+    ?>
+    <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+        <header class="entry-header">
+            <?php the_title( '<h1 class="entry-title">', '</h1>' ); ?>
+
+            <div class="entry-meta">
+                <?php
+                parent_theme_child_posted_on();
+                parent_theme_child_posted_by();
+                ?>
+            </div><!-- .entry-meta -->
+        </header><!-- .entry-header -->
+
+        <?php parent_theme_child_post_thumbnail(); ?>
+
+        <div class="entry-content">
+            <?php
+            the_content(
+                sprintf(
+                    wp_kses(
+                        /* translators: %s: Name of current post. Only visible to screen readers */
+                        __( 'Continue reading<span class="screen-reader-text"> "%s"</span>', 'parent-theme-child' ),
+                        array(
+                            'span' => array(
+                                'class' => array(),
+                            ),
+                        )
+                    ),
+                    wp_kses_post( get_the_title() )
+                )
+            );
+
+            wp_link_pages(
+                array(
+                    'before' => '<div class="page-links">' . esc_html__( 'Pages:', 'parent-theme-child' ),
+                    'after'  => '</div>',
+                )
+            );
+            ?>
+        </div><!-- .entry-content -->
+
+        <footer class="entry-footer">
+            <?php parent_theme_child_entry_footer(); ?>
+        </footer><!-- .entry-footer -->
+    </article><!-- #post-<?php the_ID(); ?> -->
+    <?php
+}
+```
+
+### Custom Functions for Child Theme (inc/custom-functions.php)
+```php
+<?php
+/**
+ * Custom functions for the child theme
+ *
+ * @package Parent_Theme_Child
+ */
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Add custom body classes.
+ *
+ * @param array $classes Body classes.
+ * @return array Modified body classes.
+ */
+function parent_theme_child_body_classes( $classes ) {
+    // Add a class if we're on the child theme
+    $classes[] = 'parent-theme-child';
+    
+    // Add a class based on the page template
+    if ( is_page_template( 'templates/full-width.php' ) ) {
+        $classes[] = 'full-width-template';
+    }
+    
+    return $classes;
+}
+add_filter( 'body_class', 'parent_theme_child_body_classes' );
+
+/**
+ * Customize the excerpt length.
+ *
+ * @param int $length Excerpt length.
+ * @return int Modified excerpt length.
+ */
+function parent_theme_child_excerpt_length( $length ) {
+    return 30;
+}
+add_filter( 'excerpt_length', 'parent_theme_child_excerpt_length' );
+
+/**
+ * Customize the excerpt more string.
+ *
+ * @param string $more The excerpt more string.
+ * @return string Modified excerpt more string.
+ */
+function parent_theme_child_excerpt_more( $more ) {
+    return '... <a class="read-more" href="' . esc_url( get_permalink() ) . '">' . esc_html__( 'Read More', 'parent-theme-child' ) . '</a>';
+}
+add_filter( 'excerpt_more', 'parent_theme_child_excerpt_more' );
+
+/**
+ * Add custom widget area.
+ */
+function parent_theme_child_widgets_init() {
+    register_sidebar(
+        array(
+            'name'          => esc_html__( 'Child Theme Sidebar', 'parent-theme-child' ),
+            'id'            => 'sidebar-child',
+            'description'   => esc_html__( 'Add widgets here to appear in your child theme sidebar.', 'parent-theme-child' ),
+            'before_widget' => '<section id="%1$s" class="widget %2$s">',
+            'after_widget'  => '</section>',
+            'before_title'  => '<h2 class="widget-title">',
+            'after_title'   => '</h2>',
+        )
+    );
+}
+add_action( 'widgets_init', 'parent_theme_child_widgets_init' );
+
+/**
+ * Add custom shortcode.
+ *
+ * @param array $atts Shortcode attributes.
+ * @return string Shortcode output.
+ */
+function parent_theme_child_custom_shortcode( $atts ) {
+    $atts = shortcode_atts(
+        array(
+            'title' => esc_html__( 'Default Title', 'parent-theme-child' ),
+            'color' => 'blue',
+        ),
+        $atts,
+        'child_custom'
+    );
+    
+    $output = '<div class="child-custom-shortcode" style="color: ' . esc_attr( $atts['color'] ) . ';">';
+    $output .= '<h3>' . esc_html( $atts['title'] ) . '</h3>';
+    $output .= '</div>';
+    
+    return $output;
+}
+add_shortcode( 'child_custom', 'parent_theme_child_custom_shortcode' );
+```
+
+### Full-Width Page Template (templates/full-width.php)
+```php
+<?php
+/**
+ * Template Name: Full Width
+ * Template Post Type: page
+ *
+ * A full-width template with no sidebar
+ *
+ * @package Parent_Theme_Child
+ */
+
+get_header();
+?>
+
+<div id="primary" class="content-area full-width">
+    <main id="main" class="site-main">
+
+        <?php
+        while ( have_posts() ) :
+            the_post();
+
+            get_template_part( 'template-parts/content', 'page' );
+
+            // If comments are open or we have at least one comment, load up the comment template.
+            if ( comments_open() || get_comments_number() ) :
+                comments_template();
+            endif;
+
+        endwhile; // End of the loop.
+        ?>
+
+    </main><!-- #main -->
+</div><!-- #primary -->
+
+<?php
+get_footer();
+```

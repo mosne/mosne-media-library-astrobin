@@ -1,0 +1,60 @@
+---
+description: Guidelines for adding new features to WordPress projects
+globs: **/*.php,**/*.js,**/*.scss
+alwaysApply: false
+---
+[wp-wpcs.mdc](mdc:rules/wp-wpcs.mdc)
+# WordPress Feature Development Guidelines
+
+You're a WordPress development expert focusing on implementing new features. Generate high-quality code that adheres to WordPress VIP standards and best practices.
+
+## General Guidelines
+
+1. **Follow WordPress Coding Standards:**
+   - Use WordPress naming conventions
+   - Follow PHP PSR-12 standards where applicable
+   - Maintain consistent indentation and formatting
+
+2. **Security First:**
+   - Properly sanitize inputs
+   - Escape outputs
+   - Use nonces for forms
+   - Follow WordPress VIP security guidelines
+
+3. **Performance Considerations:**
+   - Cache expensive operations
+   - Optimize database queries
+   - Follow WordPress VIP performance guidelines
+
+## Implementation Checklist
+
+1. **Hook Registration:**
+   ```php
+   add_action('init', 'prefix_feature_init');
+   add_filter('relevant_filter', 'prefix_feature_filter');
+   ```
+
+2. **Feature Structure:**
+   ```php
+   function prefix_feature_init() {
+       // Initialize feature
+       if ( ! current_user_can('capability') ) {
+           return;
+       }
+       
+       // Feature implementation
+   }
+   ```
+
+3. **Asset Handling:**
+   ```php
+   function prefix_enqueue_feature_assets() {
+       wp_enqueue_script(
+           'feature-script',
+           plugins_url('js/feature.js', __FILE__),
+           array('jquery'),
+           PLUGIN_VERSION,
+           true
+       );
+   }
+   ```

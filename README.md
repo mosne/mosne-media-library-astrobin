@@ -14,6 +14,7 @@ WordPress plugin to integrate AstroBin images into WordPress using the Media Lib
   - Top Picks
 - Secure storage of AstroBin API credentials
 
+
 ## Installation
 
 1. Download or clone this repository to your WordPress plugins directory
@@ -77,4 +78,3 @@ The plugin specifically uses these endpoints:
 
 This plugin is licensed under the Gpl2 licence
 This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.
-AstroBin is a trademark of AstroBin Ltd.

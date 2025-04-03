@@ -1,0 +1,373 @@
+---
+description: Guidelines for WordPress template hierarchy implementation
+globs: **/*.php,**/templates/**,**/template-parts/**
+alwaysApply: false
+---
+# WordPress Template Hierarchy Guidelines
+
+You're a WordPress template hierarchy expert. Generate code that properly implements WordPress template files following the WordPress template hierarchy system.
+
+## General Guidelines
+
+1. **Template Hierarchy Understanding:**
+   - Follow WordPress template hierarchy order
+   - Use appropriate template files for different content types
+   - Understand template fallbacks
+   - Implement template parts for reusable components
+   - Consider template hierarchy for custom post types
+
+2. **Template File Naming:**
+   - Follow WordPress naming conventions
+   - Use descriptive names for custom templates
+   - Use appropriate prefixes for template parts
+   - Implement specific templates for different content types
+   - Use proper file extensions (.php)
+
+3. **Template Organization:**
+   - Separate templates by content type
+   - Use template parts for reusable components
+   - Implement consistent structure across templates
+   - Consider mobile and responsive design
+   - Document template purpose and usage
+
+4. **Template Loading:**
+   - Use proper template loading functions
+   - Implement template hooks correctly
+   - Consider template overrides in child themes
+   - Use conditional tags appropriately
+   - Implement custom template loaders when needed
+
+## Template Hierarchy Overview
+
+1. **Page Templates:**
+   - `page-{slug}.php` - Specific page template by slug
+   - `page-{id}.php` - Specific page template by ID
+   - `page.php` - Generic page template
+   - `singular.php` - Generic singular template
+   - `index.php` - Fallback template
+
+2. **Post Templates:**
+   - `single-{post-type}-{slug}.php` - Specific post by type and slug
+   - `single-{post-type}.php` - Specific post type template
+   - `single.php` - Generic single post template
+   - `singular.php` - Generic singular template
+   - `index.php` - Fallback template
+
+3. **Archive Templates:**
+   - `archive-{post-type}.php` - Post type archive
+   - `archive.php` - Generic archive template
+   - `index.php` - Fallback template
+
+4. **Category Templates:**
+   - `category-{slug}.php` - Specific category by slug
+   - `category-{id}.php` - Specific category by ID
+   - `category.php` - Generic category template
+   - `archive.php` - Generic archive template
+   - `index.php` - Fallback template
+
+5. **Tag Templates:**
+   - `tag-{slug}.php` - Specific tag by slug
+   - `tag-{id}.php` - Specific tag by ID
+   - `tag.php` - Generic tag template
+   - `archive.php` - Generic archive template
+   - `index.php` - Fallback template
+
+6. **Author Templates:**
+   - `author-{nicename}.php` - Specific author by nicename
+   - `author-{id}.php` - Specific author by ID
+   - `author.php` - Generic author template
+   - `archive.php` - Generic archive template
+   - `index.php` - Fallback template
+
+7. **Date Templates:**
+   - `date.php` - Date archive template
+   - `archive.php` - Generic archive template
+   - `index.php` - Fallback template
+
+8. **Search Templates:**
+   - `search.php` - Search results template
+   - `index.php` - Fallback template
+
+9. **404 Templates:**
+   - `404.php` - 404 error template
+   - `index.php` - Fallback template
+
+10. **Attachment Templates:**
+    - `attachment.php` - Generic attachment template
+    - `single.php` - Generic single post template
+    - `index.php` - Fallback template
+
+## Code Examples
+
+### Basic Template Structure
+```php
+<?php
+/**
+ * Template Name: Custom Page Template
+ * Template Post Type: page
+ *
+ * @package ThemeName
+ */
+
+get_header();
+?>
+
+<main id="primary" class="site-main">
+    <?php
+    while ( have_posts() ) :
+        the_post();
+        
+        get_template_part( 'template-parts/content', 'page' );
+        
+        // If comments are open or we have at least one comment, load up the comment template.
+        if ( comments_open() || get_comments_number() ) :
+            comments_template();
+        endif;
+    endwhile;
+    ?>
+</main><!-- #primary -->
+
+<?php
+get_sidebar();
+get_footer();
+```
+
+### Template Part Implementation
+```php
+<?php
+/**
+ * Template part for displaying page content.
+ *
+ * @package ThemeName
+ */
+
+?>
+
+<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+    <header class="entry-header">
+        <?php the_title( '<h1 class="entry-title">', '</h1>' ); ?>
+    </header><!-- .entry-header -->
+
+    <?php if ( has_post_thumbnail() ) : ?>
+        <div class="entry-thumbnail">
+            <?php the_post_thumbnail( 'large' ); ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="entry-content">
+        <?php
+        the_content();
+        
+        wp_link_pages(
+            array(
+                'before' => '<div class="page-links">' . esc_html__( 'Pages:', 'theme' ),
+                'after'  => '</div>',
+            )
+        );
+        ?>
+    </div><!-- .entry-content -->
+
+    <footer class="entry-footer">
+        <?php edit_post_link( esc_html__( 'Edit', 'theme' ), '<span class="edit-link">', '</span>' ); ?>
+    </footer><!-- .entry-footer -->
+</article><!-- #post-<?php the_ID(); ?> -->
+```
+
+### Custom Post Type Template
+```php
+<?php
+/**
+ * Template for displaying single product posts.
+ *
+ * @package ThemeName
+ */
+
+get_header();
+?>
+
+<main id="primary" class="site-main">
+    <?php
+    while ( have_posts() ) :
+        the_post();
+        
+        get_template_part( 'template-parts/content', 'product' );
+        
+        // Previous/next post navigation.
+        the_post_navigation(
+            array(
+                'prev_text' => '<span class="nav-subtitle">' . esc_html__( 'Previous:', 'theme' ) . '</span> <span class="nav-title">%title</span>',
+                'next_text' => '<span class="nav-subtitle">' . esc_html__( 'Next:', 'theme' ) . '</span> <span class="nav-title">%title</span>',
+            )
+        );
+    endwhile;
+    ?>
+</main><!-- #primary -->
+
+<?php
+get_sidebar( 'product' );
+get_footer();
+```
+
+### Custom Template Loading
+```php
+/**
+ * Load a custom template for a specific post type.
+ *
+ * @param string $template The path of the template to include.
+ * @return string The path of the template to include.
+ */
+function prefix_load_custom_template( $template ) {
+    if ( is_singular( 'product' ) ) {
+        $custom_template = locate_template( array( 'custom-templates/product.php' ) );
+        
+        if ( ! empty( $custom_template ) ) {
+            return $custom_template;
+        }
+    }
+    
+    return $template;
+}
+add_filter( 'template_include', 'prefix_load_custom_template' );
+```
+
+### Conditional Template Parts
+```php
+<?php
+/**
+ * Conditionally include template parts based on post meta.
+ */
+$layout = get_post_meta( get_the_ID(), 'page_layout', true );
+
+if ( 'full-width' === $layout ) {
+    get_template_part( 'template-parts/layouts/full-width' );
+} elseif ( 'sidebar-left' === $layout ) {
+    get_template_part( 'template-parts/layouts/sidebar-left' );
+} elseif ( 'sidebar-right' === $layout ) {
+    get_template_part( 'template-parts/layouts/sidebar-right' );
+} else {
+    // Default layout
+    get_template_part( 'template-parts/layouts/default' );
+}
+```
+
+### Archive Template with Custom Query
+```php
+<?php
+/**
+ * Archive template for products.
+ *
+ * @package ThemeName
+ */
+
+get_header();
+?>
+
+<main id="primary" class="site-main">
+    <?php if ( have_posts() ) : ?>
+        <header class="page-header">
+            <?php
+            the_archive_title( '<h1 class="page-title">', '</h1>' );
+            the_archive_description( '<div class="archive-description">', '</div>' );
+            ?>
+        </header><!-- .page-header -->
+
+        <div class="product-grid">
+            <?php
+            while ( have_posts() ) :
+                the_post();
+                get_template_part( 'template-parts/content', 'product-archive' );
+            endwhile;
+            ?>
+        </div><!-- .product-grid -->
+
+        <?php
+        the_posts_pagination(
+            array(
+                'prev_text' => esc_html__( 'Previous', 'theme' ),
+                'next_text' => esc_html__( 'Next', 'theme' ),
+            )
+        );
+    else :
+        get_template_part( 'template-parts/content', 'none' );
+    endif;
+    ?>
+</main><!-- #primary -->
+
+<?php
+get_sidebar();
+get_footer();
+```
+
+### Custom 404 Template
+```php
+<?php
+/**
+ * The template for displaying 404 pages (not found).
+ *
+ * @package ThemeName
+ */
+
+get_header();
+?>
+
+<main id="primary" class="site-main">
+    <section class="error-404 not-found">
+        <header class="page-header">
+            <h1 class="page-title"><?php esc_html_e( 'Oops! That page can&rsquo;t be found.', 'theme' ); ?></h1>
+        </header><!-- .page-header -->
+
+        <div class="page-content">
+            <p><?php esc_html_e( 'It looks like nothing was found at this location. Maybe try a search?', 'theme' ); ?></p>
+
+            <?php get_search_form(); ?>
+
+            <div class="widget-area">
+                <div class="widget">
+                    <h2 class="widget-title"><?php esc_html_e( 'Most Used Categories', 'theme' ); ?></h2>
+                    <ul>
+                        <?php
+                        wp_list_categories(
+                            array(
+                                'orderby'    => 'count',
+                                'order'      => 'DESC',
+                                'show_count' => 1,
+                                'title_li'   => '',
+                                'number'     => 10,
+                            )
+                        );
+                        ?>
+                    </ul>
+                </div><!-- .widget -->
+
+                <div class="widget">
+                    <h2 class="widget-title"><?php esc_html_e( 'Recent Posts', 'theme' ); ?></h2>
+                    <?php
+                    $recent_posts = wp_get_recent_posts(
+                        array(
+                            'numberposts' => 5,
+                            'post_status' => 'publish',
+                        )
+                    );
+                    
+                    if ( $recent_posts ) :
+                        echo '<ul>';
+                        foreach ( $recent_posts as $recent ) {
+                            printf(
+                                '<li><a href="%1$s">%2$s</a></li>',
+                                esc_url( get_permalink( $recent['ID'] ) ),
+                                esc_html( $recent['post_title'] )
+                            );
+                        }
+                        echo '</ul>';
+                        wp_reset_postdata();
+                    endif;
+                    ?>
+                </div><!-- .widget -->
+            </div><!-- .widget-area -->
+        </div><!-- .page-content -->
+    </section><!-- .error-404 -->
+</main><!-- #primary -->
+
+<?php
+get_footer();
+```

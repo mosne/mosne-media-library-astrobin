@@ -1,0 +1,214 @@
+---
+description: Guidelines for Polylang integration in WordPress
+globs: **/*.php,**/*.js
+alwaysApply: false
+---
+# WordPress Polylang Integration Guidelines
+
+You're a WordPress multilingual expert. Generate high-quality code that follows best practices for implementing Polylang in WordPress projects.
+
+## General Guidelines
+
+1. **String Translation:**
+   - Register strings for translation
+   - Use proper translation functions
+   - Handle dynamic content
+   - Consider context
+
+2. **Content Translation:**
+   - Set up proper language synchronization
+   - Handle custom post types and taxonomies
+   - Implement language switcher
+   - Handle media translations
+
+3. **URL Structure:**
+   - Configure proper URL structure
+   - Handle language detection
+   - Implement proper redirects
+   - Consider SEO implications
+
+## Code Examples
+
+### String Registration
+```php
+/**
+ * Register strings for translation
+ */
+function prefix_register_polylang_strings() {
+    if (function_exists('pll_register_string')) {
+        // Register simple strings
+        pll_register_string('site-description', get_bloginfo('description'), 'Theme');
+        
+        // Register strings with context
+        pll_register_string('read-more', 'Read more', 'Theme', false);
+        
+        // Register multiline strings
+        pll_register_string(
+            'footer-text',
+            'This is a multiline text that needs translation.',
+            'Theme',
+            true // multiline
+        );
+        
+        // Register strings from options
+        $copyright = get_option('theme_copyright');
+        if ($copyright) {
+            pll_register_string('copyright', $copyright, 'Theme');
+        }
+    }
+}
+add_action('init', 'prefix_register_polylang_strings');
+```
+
+### String Translation Usage
+```php
+/**
+ * Get translated string
+ *
+ * @param string $string The string to translate.
+ * @param string $context The context for the string.
+ * @return string The translated string.
+ */
+function prefix_translate_string($string, $context = 'Theme') {
+    if (function_exists('pll__')) {
+        return pll__($string);
+    }
+    return $string;
+}
+
+// Usage example
+echo prefix_translate_string('Read more');
+
+// Alternative direct usage
+if (function_exists('pll_e')) {
+    pll_e('Read more');
+} else {
+    echo 'Read more';
+}
+```
+
+### Language Switcher
+```php
+/**
+ * Display language switcher
+ *
+ * @param string $display Display type (dropdown, list).
+ * @return string Language switcher HTML.
+ */
+function prefix_language_switcher($display = 'list') {
+    if (!function_exists('pll_the_languages')) {
+        return '';
+    }
+    
+    $args = [
+        'show_flags' => 1,
+        'show_names' => 1,
+        'display_names_as' => 'name',
+        'hide_if_empty' => 0,
+        'force_home' => 0,
+        'hide_if_no_translation' => 0,
+        'hide_current' => 0,
+        'post_id' => null,
+        'raw' => 0,
+    ];
+    
+    if ('dropdown' === $display) {
+        $args['dropdown'] = 1;
+    }
+    
+    ob_start();
+    pll_the_languages($args);
+    return ob_get_clean();
+}
+
+// Usage in template
+echo prefix_language_switcher('dropdown');
+```
+
+### Custom Post Type Registration with Polylang Support
+```php
+/**
+ * Register custom post type with Polylang support
+ */
+function prefix_register_cpt_with_polylang() {
+    $args = [
+        'labels' => [
+            'name' => __('Projects', 'theme'),
+            'singular_name' => __('Project', 'theme'),
+        ],
+        'public' => true,
+        'has_archive' => true,
+        'supports' => ['title', 'editor', 'thumbnail', 'excerpt'],
+        'show_in_rest' => true,
+    ];
+    
+    register_post_type('project', $args);
+    
+    // Add Polylang support for the custom post type
+    if (function_exists('pll_register_string')) {
+        add_filter('pll_get_post_types', function($post_types) {
+            $post_types['project'] = 'project';
+            return $post_types;
+        });
+    }
+}
+add_action('init', 'prefix_register_cpt_with_polylang');
+```
+
+### Get Translated URL
+```php
+/**
+ * Get URL for content in specific language
+ *
+ * @param int    $post_id The post ID.
+ * @param string $lang The language code.
+ * @return string The translated URL.
+ */
+function prefix_get_translated_url($post_id, $lang) {
+    if (!function_exists('pll_get_post')) {
+        return get_permalink($post_id);
+    }
+    
+    $translated_post_id = pll_get_post($post_id, $lang);
+    
+    if ($translated_post_id) {
+        return get_permalink($translated_post_id);
+    }
+    
+    // Fallback to original URL
+    return get_permalink($post_id);
+}
+
+// Usage example
+$french_url = prefix_get_translated_url(get_the_ID(), 'fr');
+```
+
+### Current Language Detection
+```php
+/**
+ * Get current language information
+ *
+ * @param string $info Type of information (slug, name, locale).
+ * @return string The requested language information.
+ */
+function prefix_get_current_language($info = 'slug') {
+    if (!function_exists('pll_current_language')) {
+        return '';
+    }
+    
+    switch ($info) {
+        case 'slug':
+            return pll_current_language();
+        case 'name':
+            return pll_current_language('name');
+        case 'locale':
+            return pll_current_language('locale');
+        default:
+            return pll_current_language();
+    }
+}
+
+// Usage example
+$current_lang = prefix_get_current_language();
+$is_french = ('fr' === $current_lang);
+```

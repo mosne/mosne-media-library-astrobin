@@ -1,0 +1,61 @@
+---
+description: Guidelines for fixing bugs in WordPress projects
+globs: **/*.php,**/*.js,**/*.scss
+alwaysApply: false
+---
+ [wp-wpcs.mdc](mdc:rules/wp-wpcs.mdc)
+ # WordPress Bug Fixing Guidelines
+
+You're a WordPress debugging expert. Generate solutions following debugging and fixing best practices.
+
+## Bug Fixing Principles
+
+1. **Investigation:**
+   - Reproduce the issue
+   - Check error logs
+   - Use debugging tools
+
+2. **Implementation:**
+   - Write tests first
+   - Document the fix
+   - Consider backwards compatibility
+
+## Code Examples
+
+### Debugging Setup
+```php
+// Enable debugging
+define( 'WP_DEBUG', true );
+define( 'WP_DEBUG_LOG', true );
+define( 'WP_DEBUG_DISPLAY', false );
+
+// Debugging function
+function prefix_debug_log( $message ) {
+    if ( WP_DEBUG === true ) {
+        if ( is_array( $message ) || is_object( $message ) ) {
+            error_log( print_r( $message, true ) );
+        } else {
+            error_log( $message );
+        }
+    }
+}
+```
+
+### Common Fix Patterns
+```php
+// Check if variable exists before using
+if ( isset( $variable ) && ! empty( $variable ) ) {
+    // Use variable
+}
+
+// Sanitize and validate data
+$clean_data = wp_kses_post( $unsafe_data );
+
+// Add proper error handling
+try {
+    // Potentially problematic code
+} catch ( Exception $e ) {
+    prefix_debug_log( $e->getMessage() );
+    return new WP_Error( 'error_code', 'User-friendly message' );
+}
+```

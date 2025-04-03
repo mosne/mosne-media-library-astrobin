@@ -1,0 +1,64 @@
+---
+description: Guidelines for WordPress database operations
+globs: **/*.php
+---
+[wp-wpcs.mdc](mdc:rules/wp-wpcs.mdc)
+ # WordPress Database Operations Guidelines
+
+You're a WordPress database expert. Generate efficient and secure database operations following WordPress VIP standards.
+
+## Database Principles
+
+1. **Query Best Practices:**
+   - Use WordPress functions over direct SQL
+   - Properly prepare queries
+   - Follow VIP database guidelines
+
+2. **Performance:**
+   - Index important fields
+   - Avoid heavy queries
+   - Implement caching
+
+## Code Examples
+
+### Custom Queries
+```php
+global $wpdb;
+
+// Prepared statements
+$results = $wpdb->get_results( $wpdb->prepare(
+    "SELECT * FROM {$wpdb->prefix}my_table WHERE user_id = %d AND status = %s",
+    $user_id,
+    $status
+) );
+
+// Meta queries
+$args = array(
+    'meta_query' => array(
+        array(
+            'key' => 'user_level',
+            'value' => 'premium',
+            'compare' => '='
+        )
+    )
+);
+```
+
+### Custom Tables
+```php
+function prefix_create_custom_table() {
+    global $wpdb;
+    $charset_collate = $wpdb->get_charset_collate();
+    
+    $sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}custom_table (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        user_id bigint(20) NOT NULL,
+        data longtext NOT NULL,
+        created datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id),
+        KEY user_id (user_id)
+    ) $charset_collate;";
+    
+    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+    dbDelta( $sql );
+}

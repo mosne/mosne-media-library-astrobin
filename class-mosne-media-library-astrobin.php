@@ -73,8 +73,8 @@ class Mosne_Media_Library_AstroBin {
      */
     public function add_admin_menu() {
         add_options_page(
-            __( 'AstroBin Settings', 'mosne-media-library-astrobin' ),
-            __( 'AstroBin', 'mosne-media-library-astrobin' ),
+            __( 'Mosne Media Library AstroBin', 'mosne-media-library-astrobin' ),
+            __( 'Mosne Media Library AstroBin', 'mosne-media-library-astrobin' ),
             'manage_options',
             'mosne-media-library-astrobin',
             array( $this, 'display_settings_page' )

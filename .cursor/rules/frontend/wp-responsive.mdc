@@ -1,0 +1,471 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+ # Responsive Design Guidelines for WordPress
+
+You're a WordPress responsive design expert. You implement mobile-first, responsive websites following best practices.
+
+## Core Principles
+
+1. **Mobile-First Approach:**
+   - Start with mobile layouts
+   - Progressively enhance for larger screens
+   - Use min-width media queries
+   - Maintain a consistent experience across devices
+
+2. **Flexible Layouts:**
+   - Use fluid grids and flexible containers
+   - Implement proper breakpoints
+   - Avoid fixed-width elements
+   - Create consistent spacing systems
+
+3. **Responsive Images:**
+   - Use WordPress responsive image features
+   - Implement proper sizing attributes
+   - Optimize images for different viewports
+   - Consider art direction needs
+
+4. **Performance Optimization:**
+   - Minimize HTTP requests
+   - Optimize asset loading
+   - Create efficient media queries
+   - Implement conditional loading
+
+## Implementation Examples
+
+### Responsive Meta Tag
+
+```php
+/**
+ * Add responsive viewport meta tag.
+ */
+function prefix_responsive_meta_tags() {
+	?>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<?php
+}
+add_action( 'wp_head', 'prefix_responsive_meta_tags' );
+```
+
+### Responsive Images in WordPress
+
+```php
+/**
+ * Add custom image sizes for responsive images.
+ */
+function prefix_add_image_sizes() {
+	// Mobile-optimized featured image
+	add_image_size( 'featured-small', 600, 400, true );
+	
+	// Tablet-optimized featured image
+	add_image_size( 'featured-medium', 1024, 680, true );
+	
+	// Desktop-optimized featured image
+	add_image_size( 'featured-large', 1600, 1000, true );
+}
+add_action( 'after_setup_theme', 'prefix_add_image_sizes' );
+
+/**
+ * Add custom image sizes to media library.
+ *
+ * @param array $sizes Existing image sizes.
+ * @return array Modified image sizes.
+ */
+function prefix_custom_image_sizes( $sizes ) {
+	return array_merge( $sizes, array(
+		'featured-small'  => __( 'Featured Small', 'my-text-domain' ),
+		'featured-medium' => __( 'Featured Medium', 'my-text-domain' ),
+		'featured-large'  => __( 'Featured Large', 'my-text-domain' ),
+	) );
+}
+add_filter( 'image_size_names_choose', 'prefix_custom_image_sizes' );
+
+/**
+ * Output responsive featured image.
+ *
+ * @param int    $post_id Post ID.
+ * @param string $class   Additional CSS class.
+ */
+function prefix_responsive_featured_image( $post_id = null, $class = '' ) {
+	if ( ! $post_id ) {
+		$post_id = get_the_ID();
+	}
+	
+	if ( ! has_post_thumbnail( $post_id ) ) {
+		return;
+	}
+	
+	$image_id = get_post_thumbnail_id( $post_id );
+	
+	// Get image data for different sizes
+	$img_small  = wp_get_attachment_image_src( $image_id, 'featured-small' );
+	$img_medium = wp_get_attachment_image_src( $image_id, 'featured-medium' );
+	$img_large  = wp_get_attachment_image_src( $image_id, 'featured-large' );
+	$img_full   = wp_get_attachment_image_src( $image_id, 'full' );
+	
+	// Get alt text
+	$alt = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
+	
+	// Build srcset and sizes attributes
+	$srcset = sprintf(
+		'%s 600w, %s 1024w, %s 1600w, %s %dw',
+		esc_url( $img_small[0] ),
+		esc_url( $img_medium[0] ),
+		esc_url( $img_large[0] ),
+		esc_url( $img_full[0] ),
+		$img_full[1]
+	);
+	
+	$sizes = '(max-width: 600px) 100vw, (max-width: 1024px) 1024px, 1600px';
+	
+	// Output responsive image
+	printf(
+		'<img src="%s" srcset="%s" sizes="%s" alt="%s" width="%d" height="%d" class="%s">',
+		esc_url( $img_small[0] ),
+		esc_attr( $srcset ),
+		esc_attr( $sizes ),
+		esc_attr( $alt ),
+		esc_attr( $img_full[1] ),
+		esc_attr( $img_full[2] ),
+		esc_attr( 'responsive-image ' . $class )
+	);
+}
+```
+
+### Responsive Menu with CSS and JavaScript
+
+**HTML Structure:**
+
+```php
+<nav class="main-navigation" role="navigation" aria-label="<?php esc_attr_e( 'Main Menu', 'my-text-domain' ); ?>">
+	<button class="menu-toggle" aria-controls="primary-menu" aria-expanded="false">
+		<span class="screen-reader-text"><?php esc_html_e( 'Menu', 'my-text-domain' ); ?></span>
+		<span class="menu-toggle-icon"></span>
+	</button>
+
+	<?php
+	wp_nav_menu( array(
+		'theme_location' => 'primary',
+		'menu_id'        => 'primary-menu',
+		'menu_class'     => 'menu nav-menu',
+		'container'      => '',
+	) );
+	?>
+</nav>
+```
+
+**SCSS Styles:**
+
+```scss
+// Variables
+$breakpoint-mobile: 768px;
+$menu-background: #f8f9fa;
+$menu-text-color: #333;
+$menu-hover-color: #007bff;
+
+// Main navigation styles
+.main-navigation {
+	position: relative;
+	
+	@media (min-width: $breakpoint-mobile) {
+		display: flex;
+		align-items: center;
+	}
+	
+	// Menu toggle button (mobile only)
+	.menu-toggle {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.75rem 1rem;
+		background: transparent;
+		border: 1px solid rgba(0, 0, 0, 0.1);
+		border-radius: 3px;
+		cursor: pointer;
+		
+		&:focus {
+			outline: 2px solid $menu-hover-color;
+		}
+		
+		.menu-toggle-icon {
+			position: relative;
+			display: block;
+			width: 24px;
+			height: 2px;
+			background-color: $menu-text-color;
+			transition: all 0.3s ease;
+			
+			&::before,
+			&::after {
+				content: '';
+				position: absolute;
+				left: 0;
+				width: 24px;
+				height: 2px;
+				background-color: $menu-text-color;
+				transition: all 0.3s ease;
+			}
+			
+			&::before {
+				top: -8px;
+			}
+			
+			&::after {
+				bottom: -8px;
+			}
+		}
+		
+		&[aria-expanded="true"] {
+			.menu-toggle-icon {
+				background-color: transparent;
+				
+				&::before {
+					transform: rotate(45deg);
+					top: 0;
+				}
+				
+				&::after {
+					transform: rotate(-45deg);
+					bottom: 0;
+				}
+			}
+		}
+		
+		@media (min-width: $breakpoint-mobile) {
+			display: none;
+		}
+	}
+	
+	// Menu container
+	.nav-menu {
+		display: none;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		
+		&.is-active {
+			display: block;
+		}
+		
+		@media (min-width: $breakpoint-mobile) {
+			display: flex;
+			flex-wrap: wrap;
+		}
+		
+		// Top-level menu items
+		> li {
+			position: relative;
+			
+			@media (max-width: $breakpoint-mobile - 1) {
+				border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+				
+				&:last-child {
+					border-bottom: none;
+				}
+			}
+			
+			@media (min-width: $breakpoint-mobile) {
+				margin-right: 1rem;
+				
+				&:last-child {
+					margin-right: 0;
+				}
+			}
+			
+			> a {
+				display: block;
+				padding: 0.75rem 1rem;
+				color: $menu-text-color;
+				text-decoration: none;
+				
+				&:hover,
+				&:focus {
+					color: $menu-hover-color;
+					outline: none;
+				}
+				
+				@media (min-width: $breakpoint-mobile) {
+					padding: 0.5rem 0.75rem;
+				}
+			}
+			
+			// Current menu item
+			&.current-menu-item > a {
+				font-weight: bold;
+				color: $menu-hover-color;
+			}
+		}
+		
+		// Submenu
+		.sub-menu {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			
+			@media (max-width: $breakpoint-mobile - 1) {
+				padding-left: 1.5rem;
+			}
+			
+			@media (min-width: $breakpoint-mobile) {
+				position: absolute;
+				top: 100%;
+				left: 0;
+				z-index: 100;
+				min-width: 200px;
+				background-color: $menu-background;
+				box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+				opacity: 0;
+				visibility: hidden;
+				transform: translateY(10px);
+				transition: all 0.2s ease;
+			}
+			
+			li {
+				@media (min-width: $breakpoint-mobile) {
+					border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+					
+					&:last-child {
+						border-bottom: none;
+					}
+				}
+				
+				a {
+					display: block;
+					padding: 0.5rem 1rem;
+					color: $menu-text-color;
+					text-decoration: none;
+					
+					&:hover,
+					&:focus {
+						color: $menu-hover-color;
+						background-color: rgba(0, 0, 0, 0.03);
+						outline: none;
+					}
+				}
+			}
+		}
+		
+		// Show submenu on hover/focus
+		@media (min-width: $breakpoint-mobile) {
+			li:hover > .sub-menu,
+			li:focus-within > .sub-menu {
+				opacity: 1;
+				visibility: visible;
+				transform: translateY(0);
+			}
+		}
+	}
+}
+
+// Screen reader text
+.screen-reader-text {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+```
+
+**JavaScript:**
+
+```js
+/**
+ * Handle responsive navigation menu.
+ */
+function initResponsiveNavigation() {
+	const menuToggle = document.querySelector('.menu-toggle');
+	const menu = document.querySelector('.nav-menu');
+	
+	if (!menuToggle || !menu) {
+		return;
+	}
+	
+	// Toggle menu visibility
+	function toggleMenu() {
+		const expanded = menuToggle.getAttribute('aria-expanded') === 'true';
+		menuToggle.setAttribute('aria-expanded', !expanded);
+		menu.classList.toggle('is-active', !expanded);
+	}
+	
+	// Event listeners
+	menuToggle.addEventListener('click', toggleMenu);
+	
+	// Close menu on escape key
+	document.addEventListener('keydown', event => {
+		if (event.key === 'Escape' && menu.classList.contains('is-active')) {
+			toggleMenu();
+		}
+	});
+	
+	// Handle resize events
+	function handleResize() {
+		if (window.innerWidth >= 768) {
+			menuToggle.setAttribute('aria-expanded', 'false');
+			menu.classList.remove('is-active');
+		}
+	}
+	
+	window.addEventListener('resize', handleResize);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+	initResponsiveNavigation();
+});
+```
+
+## Best Practices
+
+1. **Layout Structure:**
+   - Use flexible grid systems
+   - Implement proper container structures
+   - Design for content-driven breakpoints
+   - Create consistent spacing systems
+
+2. **CSS Techniques:**
+   - Use relative units (%, em, rem)
+   - Implement CSS custom properties for responsive values
+   - Use min-width media queries for mobile-first design
+   - Create logical breakpoints
+
+3. **Typography:**
+   - Use fluid typography systems
+   - Set appropriate line heights for readability
+   - Adjust font sizes for different viewports
+   - Maintain proper contrast
+
+4. **Media Handling:**
+   - Implement responsive images with srcset and sizes
+   - Use the picture element for art direction
+   - Lazy load images below the fold
+   - Optimize video embedding
+
+5. **Navigation:**
+   - Design intuitive mobile navigation
+   - Implement proper touch targets
+   - Create clear navigation hierarchies
+   - Ensure keyboard accessibility
+
+6. **Testing:**
+   - Test on real devices
+   - Use browser dev tools for viewport simulation
+   - Check for layout shifts
+   - Verify performance on different networks
+
+7. **Performance:**
+   - Minimize CSS and JavaScript
+   - Load critical CSS inline
+   - Defer non-critical resources
+   - Implement conditional loading for different viewports
+
+8. **WordPress Integration:**
+   - Use theme supports for responsive features
+   - Implement responsive embeds
+   - Leverage WordPress image handling
+   - Create responsive-friendly admin interfaces

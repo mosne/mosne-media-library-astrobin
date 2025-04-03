@@ -1,0 +1,57 @@
+---
+description: Guidelines for WordPress documentation
+globs: **/*.php,**/*.js,**/*.scss
+---
+ # WordPress Documentation Guidelines
+
+You're a WordPress documentation expert. Generate clear, comprehensive documentation following WordPress standards.
+
+## Documentation Principles
+
+1. **Code Documentation:**
+   - PHPDoc blocks for functions/classes
+   - Inline comments for complex logic
+   - README files for projects
+
+2. **Standards:**
+   - Follow WordPress documentation standards
+   - Use consistent formatting
+   - Include examples
+
+## Code Examples
+
+### Function Documentation
+```php
+/**
+ * Processes user data and updates meta information.
+ *
+ * @since 1.0.0
+ * @param int   $user_id The user ID.
+ * @param array $data    The user data to process.
+ * @return bool True on success, false on failure.
+ */
+function prefix_process_user_data( $user_id, $data ) {
+    // Function implementation
+}
+```
+
+### Class Documentation
+```php
+/**
+ * Handles custom post type registration and management.
+ *
+ * @package MyPlugin
+ * @since 1.0.0
+ */
+class Prefix_Custom_Post_Type {
+    /**
+     * Initializes the custom post type.
+     *
+     * @since 1.0.0
+     * @return void
+     */
+    public function init() {
+        // Method implementation
+    }
+}
+```

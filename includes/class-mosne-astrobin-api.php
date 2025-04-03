@@ -51,7 +51,7 @@ class Mosne_AstroBin_API {
                     'page_size' => array(
                         'required'          => false,
                         'sanitize_callback' => 'absint',
-                        'default'           => 20,
+                        'default'           => 30,
                     ),
                     'page' => array(
                         'required'          => false,
@@ -247,7 +247,14 @@ class Mosne_AstroBin_API {
             'url_real'    => isset( $image->url_real ) ? $image->url_real : 
                              (isset( $image->url_regular ) ? $image->url_regular : ''),
             'url_hd'      => isset( $image->url_hd ) ? $image->url_hd : '',
+
+            // add copyright license
+            'license'      => isset( $image->license ) ? $image->license : 0,
+            'license_name'   => self::get_license_name( isset( $image->license ) ? $image->license : 0 ),
+            'license_url'    => self::get_license_url( isset( $image->license ) ? $image->license : 0, isset( $image->hash ) ? $image->hash : '' ),
         );
+
+        
     }
     
     /**
@@ -315,5 +322,48 @@ class Mosne_AstroBin_API {
         $body = wp_remote_retrieve_body( $response );
         
         return json_decode( $body );
+    }
+
+    /**
+     * Map numeric license type to human-readable text
+     *
+     * @param int $license_type The numeric license type from AstroBin API.
+     * @return string The human-readable license text.
+     */
+    public static function get_license_name( $license_type ) {
+        $license_types = array(
+            0 => esc_html__( 'All rights reserved', 'mosne-media-library-astrobin' ),
+            1 => esc_html__( 'Attribution-NonCommercial-ShareAlike Creative Commons', 'mosne-media-library-astrobin' ),
+            2 => esc_html__( 'Attribution-NonCommercial Creative Commons', 'mosne-media-library-astrobin' ),
+            3 => esc_html__( 'Attribution-NonCommercial-NoDerivs Creative Commons', 'mosne-media-library-astrobin' ),
+            4 => esc_html__( 'Attribution Creative Commons', 'mosne-media-library-astrobin' ),
+            5 => esc_html__( 'Attribution-ShareAlike Creative Commons', 'mosne-media-library-astrobin' ),
+            6 => esc_html__( 'Attribution-NoDerivs Creative Commons', 'mosne-media-library-astrobin' ),
+        );
+        
+        return isset( $license_types[ $license_type ] ) 
+            ? $license_types[ $license_type ] 
+            : __( 'Unknown license', 'mosne-media-library-astrobin' );
+    }
+    
+    /**
+     * Get license URL based on license type
+     *
+     * @param int $license_type The numeric license type from AstroBin API.
+     * @param string $image_hash The hash of the image.
+     * @return string The license URL or empty string if proprietary.
+     */
+    public static function get_license_url( $license_type, $image_hash ) {
+        $license_urls = array(
+            0 => 'https://app.astrobin.com/i/' . $image_hash . '/',  // link to astrobin image page
+            1 => 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+            2 => 'https://creativecommons.org/licenses/by-nc/4.0/',
+            3 => 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
+            4 => 'https://creativecommons.org/licenses/by/4.0/',
+            5 => 'https://creativecommons.org/licenses/by-sa/4.0/',
+            6 => 'https://creativecommons.org/licenses/by-nd/4.0/',
+        );
+        
+        return isset( $license_urls[ $license_type ] ) ? $license_urls[ $license_type ] : '';
     }
 } 

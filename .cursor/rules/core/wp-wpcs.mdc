@@ -1,0 +1,257 @@
+---
+description: WordPress Coding Standards compliance guidelines for VIP environments
+globs: **/*.php,**/*.js,**/*.scss
+alwaysApply: false
+---
+# WordPress Coding Standards Compliance
+
+You're a WordPress VIP coding standards expert. Generate code that strictly adheres to WordPress Coding Standards (WPCS) and WordPress VIP coding requirements.
+
+## PHP Guidelines
+
+1. **Naming Conventions:**
+   - Functions: lowercase with underscores (e.g., `get_post_meta()`)
+   - Classes: capitalized words (e.g., `WP_Query`)
+   - Constants: uppercase with underscores (e.g., `DOING_AJAX`)
+   - Namespaces: capitalized words (e.g., `namespace Vendor\Package`)
+   - Files: lowercase with hyphens for readability (e.g., `class-wp-query.php`)
+   - Hooks: lowercase with underscores, prefixed (e.g., `prefix_after_setup_theme`)
+
+2. **Spacing and Formatting:**
+   - Indent with tabs, not spaces
+   - Space after control structure keywords (`if`, `for`, `while`, etc.)
+   - Space before and after operators (`=`, `+`, `-`, etc.)
+   - No trailing whitespace
+   - Opening braces on same line as statement
+   - Closing braces on their own line
+   - Line length should be reasonable (generally under 100 characters)
+
+3. **Documentation:**
+   - Use PHPDoc for all functions, classes, and methods
+   - Include `@param`, `@return`, and `@since` tags
+   - Document all parameters and return values
+   - Add meaningful descriptions
+   - Include usage examples for complex functions
+
+4. **VIP-Specific Requirements:**
+   - No direct database queries without proper preparation
+   - No filesystem operations using direct PHP functions
+   - No uncached option gets
+   - No blocking operations
+   - Use VIP-approved functions for remote requests
+
+## JavaScript Guidelines
+
+1. **Naming Conventions:**
+   - camelCase for variables and functions
+   - PascalCase for classes and React components
+   - UPPER_CASE for constants
+
+2. **Formatting:**
+   - Use semicolons
+   - Single quotes for strings
+   - Proper spacing around operators
+   - Four-space indentation (or tabs to match PHP)
+   - Meaningful variable and function names
+
+3. **Documentation:**
+   - Use JSDoc for functions and classes
+   - Document parameters and return values
+   - Include examples for complex functions
+
+## SCSS/CSS Guidelines
+
+1. **Naming Conventions:**
+   - BEM methodology for class names (Block__Element--Modifier)
+   - Lowercase with hyphens for file names
+   - Meaningful, descriptive names
+
+2. **Organization:**
+   - Component-based structure
+   - Variables for colors, spacing, and typography
+   - Mobile-first approach
+   - Logical grouping of related styles
+
+## Example Templates
+
+### PHP File Header
+```php
+<?php
+/**
+ * File description goes here.
+ *
+ * @package    ProjectName
+ * @subpackage Component
+ * @since      1.0.0
+ */
+
+namespace Vendor\Package;
+```
+
+### Function Definition
+```php
+/**
+ * Retrieves and processes post data.
+ *
+ * Detailed description of what this function does, including
+ * any important information about usage or behavior.
+ *
+ * @since 1.0.0
+ *
+ * @param int   $post_id The post ID.
+ * @param array $args    Optional. Additional arguments.
+ *                       Default empty array.
+ * @return array|false Post data array on success, false on failure.
+ */
+function prefix_get_post_data( $post_id, $args = array() ) {
+	if ( ! $post_id || ! is_numeric( $post_id ) ) {
+		return false;
+	}
+
+	// Function body
+	$post = get_post( $post_id );
+	
+	if ( ! $post ) {
+		return false;
+	}
+	
+	// Process and return data
+	return array(
+		'title'   => get_the_title( $post ),
+		'content' => get_the_content( null, false, $post ),
+		'excerpt' => get_the_excerpt( $post ),
+	);
+}
+```
+
+### Class Definition
+```php
+/**
+ * Handles feature functionality.
+ *
+ * @since 1.0.0
+ */
+class Feature_Handler {
+	/**
+	 * The feature options.
+	 *
+	 * @since 1.0.0
+	 * @var array
+	 */
+	private $options;
+
+	/**
+	 * Constructor.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $options Optional. Feature options.
+	 */
+	public function __construct( $options = array() ) {
+		$this->options = wp_parse_args(
+			$options,
+			array(
+				'enabled' => true,
+				'timeout' => 30,
+			)
+		);
+		
+		$this->init();
+	}
+	
+	/**
+	 * Initializes the feature.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	private function init() {
+		if ( ! $this->options['enabled'] ) {
+			return;
+		}
+		
+		add_action( 'init', array( $this, 'register' ) );
+	}
+	
+	/**
+	 * Registers feature components.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function register() {
+		// Registration code
+	}
+}
+```
+
+### VIP-Compliant Database Query
+```php
+global $wpdb;
+
+// Bad: Direct, unprepared query
+// $results = $wpdb->get_results( "SELECT * FROM {$wpdb->posts} WHERE post_type = 'post'" );
+
+// Good: Prepared query
+$results = $wpdb->get_results(
+	$wpdb->prepare(
+		"SELECT * FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
+		'post',
+		'publish'
+	)
+);
+```
+
+### JavaScript Function
+```javascript
+/**
+ * Handles form submission.
+ *
+ * @since 1.0.0
+ *
+ * @param {Event} event The submit event.
+ * @return {boolean} False to prevent default form submission.
+ */
+function handleFormSubmit( event ) {
+	event.preventDefault();
+	
+	const form = event.target;
+	const formData = new FormData( form );
+	
+	// Process form data
+	
+	return false;
+}
+```
+
+### SCSS/CSS Example
+```scss
+// Variables
+$color-primary: #0073aa;
+$color-text: #333;
+
+// Component
+.feature-card {
+	border: 1px solid #ddd;
+	padding: 20px;
+	margin-bottom: 20px;
+	
+	&__title {
+		color: $color-primary;
+		font-size: 18px;
+		margin-bottom: 10px;
+	}
+	
+	&__content {
+		color: $color-text;
+		line-height: 1.5;
+	}
+	
+	&--featured {
+		background-color: lighten($color-primary, 50%);
+		border-color: $color-primary;
+	}
+}
+```

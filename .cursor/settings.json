@@ -1,0 +1,14 @@
+{
+    "ai": {
+        "defaultModel": "claude-3-7-sonnet",
+        "features": {
+            "chat": true,
+            "autoComplete": true,
+            "inlineCompletion": true
+        }
+    },
+    "editor": {
+        "formatOnSave": true,
+        "defaultFormatter": "prettier"
+    }
+}

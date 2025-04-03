@@ -1,0 +1,302 @@
+---
+description: Guidelines for accessibility in WordPress development
+globs: **/*.php,**/*.js,**/*.scss,**/*.html
+alwaysApply: false
+---
+# WordPress Accessibility Guidelines
+
+You're a WordPress accessibility expert. Generate high-quality code that follows WCAG 2.1 standards and WordPress accessibility best practices.
+
+## General Guidelines
+
+1. **Semantic HTML:**
+   - Use proper heading hierarchy
+   - Implement appropriate landmark roles
+   - Use semantic elements (nav, main, article, etc.)
+   - Ensure proper form labeling
+
+2. **Keyboard Navigation:**
+   - Ensure all interactive elements are keyboard accessible
+   - Implement proper focus management
+   - Use proper tabindex values
+   - Provide skip links
+
+3. **ARIA Implementation:**
+   - Use ARIA attributes appropriately
+   - Implement proper ARIA landmarks
+   - Ensure dynamic content changes are announced
+   - Follow ARIA authoring practices
+
+4. **Color and Contrast:**
+   - Ensure sufficient color contrast (4.5:1 for normal text, 3:1 for large text)
+   - Don't rely on color alone to convey information
+   - Provide focus indicators
+   - Test with color blindness simulators
+
+## Code Examples
+
+### Skip Links
+```php
+<a class="skip-link screen-reader-text" href="#content">
+    <?php esc_html_e('Skip to content', 'theme'); ?>
+</a>
+
+<nav id="site-navigation" class="main-navigation" aria-label="<?php esc_attr_e('Main Navigation', 'theme'); ?>">
+    <!-- Navigation content -->
+</nav>
+
+<main id="content" class="site-content">
+    <!-- Main content -->
+</main>
+```
+
+### Screen Reader Text
+```scss
+.screen-reader-text {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute !important;
+    width: 1px;
+    word-wrap: normal !important;
+    
+    &:focus {
+        background-color: #f1f1f1;
+        border-radius: 3px;
+        box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.6);
+        clip: auto !important;
+        clip-path: none;
+        color: #21759b;
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 700;
+        height: auto;
+        left: 5px;
+        line-height: normal;
+        padding: 15px 23px 14px;
+        text-decoration: none;
+        top: 5px;
+        width: auto;
+        z-index: 100000;
+    }
+}
+```
+
+### Accessible Form
+```php
+<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+    <div class="form-group">
+        <label for="name" class="form-label">
+            <?php esc_html_e('Your Name', 'theme'); ?>
+            <span class="required" aria-hidden="true">*</span>
+            <span class="screen-reader-text"><?php esc_html_e('(required)', 'theme'); ?></span>
+        </label>
+        <input type="text" id="name" name="name" required aria-required="true">
+    </div>
+    
+    <div class="form-group">
+        <label for="email" class="form-label">
+            <?php esc_html_e('Email Address', 'theme'); ?>
+            <span class="required" aria-hidden="true">*</span>
+            <span class="screen-reader-text"><?php esc_html_e('(required)', 'theme'); ?></span>
+        </label>
+        <input type="email" id="email" name="email" required aria-required="true">
+    </div>
+    
+    <div class="form-group">
+        <fieldset>
+            <legend><?php esc_html_e('Subscription Options', 'theme'); ?></legend>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="subscribe-newsletter" name="subscribe[]" value="newsletter">
+                <label for="subscribe-newsletter"><?php esc_html_e('Subscribe to newsletter', 'theme'); ?></label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="subscribe-updates" name="subscribe[]" value="updates">
+                <label for="subscribe-updates"><?php esc_html_e('Receive product updates', 'theme'); ?></label>
+            </div>
+        </fieldset>
+    </div>
+    
+    <div class="form-group">
+        <button type="submit" class="button">
+            <?php esc_html_e('Submit', 'theme'); ?>
+        </button>
+    </div>
+    
+    <?php wp_nonce_field('contact_form_submit', 'contact_form_nonce'); ?>
+    <input type="hidden" name="action" value="contact_form_submission">
+</form>
+```
+
+### Accessible Modal
+```javascript
+// Accessible modal implementation
+class AccessibleModal {
+    constructor(modalId) {
+        this.modal = document.getElementById(modalId);
+        this.openButtons = document.querySelectorAll(`[data-opens="${modalId}"]`);
+        this.closeButtons = this.modal.querySelectorAll('[data-closes-modal]');
+        this.focusableElements = this.modal.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]');
+        this.firstFocusable = this.focusableElements[0];
+        this.lastFocusable = this.focusableElements[this.focusableElements.length - 1];
+        
+        this.init();
+    }
+    
+    init() {
+        // Set initial ARIA attributes
+        this.modal.setAttribute('aria-hidden', 'true');
+        
+        // Add event listeners
+        this.openButtons.forEach(button => {
+            button.addEventListener('click', this.openModal.bind(this));
+        });
+        
+        this.closeButtons.forEach(button => {
+            button.addEventListener('click', this.closeModal.bind(this));
+        });
+        
+        this.modal.addEventListener('keydown', this.handleKeyDown.bind(this));
+    }
+    
+    openModal() {
+        this.modal.setAttribute('aria-hidden', 'false');
+        this.modal.classList.add('is-open');
+        this.previouslyFocused = document.activeElement;
+        this.firstFocusable.focus();
+        document.body.style.overflow = 'hidden';
+    }
+    
+    closeModal() {
+        this.modal.setAttribute('aria-hidden', 'true');
+        this.modal.classList.remove('is-open');
+        this.previouslyFocused.focus();
+        document.body.style.overflow = '';
+    }
+    
+    handleKeyDown(event) {
+        // Close on ESC
+        if (event.key === 'Escape') {
+            this.closeModal();
+        }
+        
+        // Trap focus
+        if (event.key === 'Tab') {
+            if (event.shiftKey && document.activeElement === this.firstFocusable) {
+                event.preventDefault();
+                this.lastFocusable.focus();
+            } else if (!event.shiftKey && document.activeElement === this.lastFocusable) {
+                event.preventDefault();
+                this.firstFocusable.focus();
+            }
+        }
+    }
+}
+
+// Initialize modals
+document.addEventListener('DOMContentLoaded', () => {
+    const modals = document.querySelectorAll('[role="dialog"]');
+    modals.forEach(modal => {
+        new AccessibleModal(modal.id);
+    });
+});
+```
+
+### Accessible Tabs
+```javascript
+// Accessible tabs implementation
+class AccessibleTabs {
+    constructor(tabsContainer) {
+        this.tabsContainer = tabsContainer;
+        this.tabList = this.tabsContainer.querySelector('[role="tablist"]');
+        this.tabs = this.tabsContainer.querySelectorAll('[role="tab"]');
+        this.tabPanels = this.tabsContainer.querySelectorAll('[role="tabpanel"]');
+        
+        this.init();
+    }
+    
+    init() {
+        // Set initial ARIA attributes
+        this.tabs.forEach((tab, index) => {
+            const panel = this.tabPanels[index];
+            const isSelected = tab.getAttribute('aria-selected') === 'true';
+            
+            tab.setAttribute('aria-controls', panel.id);
+            panel.setAttribute('aria-labelledby', tab.id);
+            
+            if (!isSelected) {
+                panel.setAttribute('hidden', '');
+            }
+            
+            tab.addEventListener('click', this.activateTab.bind(this));
+            tab.addEventListener('keydown', this.handleKeyDown.bind(this));
+        });
+    }
+    
+    activateTab(event) {
+        const clickedTab = event.currentTarget;
+        
+        // Deactivate all tabs
+        this.tabs.forEach(tab => {
+            tab.setAttribute('aria-selected', 'false');
+            tab.setAttribute('tabindex', '-1');
+        });
+        
+        // Hide all panels
+        this.tabPanels.forEach(panel => {
+            panel.setAttribute('hidden', '');
+        });
+        
+        // Activate clicked tab
+        clickedTab.setAttribute('aria-selected', 'true');
+        clickedTab.setAttribute('tabindex', '0');
+        clickedTab.focus();
+        
+        // Show corresponding panel
+        const panelId = clickedTab.getAttribute('aria-controls');
+        const panel = document.getElementById(panelId);
+        panel.removeAttribute('hidden');
+    }
+    
+    handleKeyDown(event) {
+        const currentTab = event.currentTarget;
+        let targetTab;
+        
+        switch (event.key) {
+            case 'ArrowRight':
+                targetTab = currentTab.nextElementSibling || this.tabs[0];
+                break;
+            case 'ArrowLeft':
+                targetTab = currentTab.previousElementSibling || this.tabs[this.tabs.length - 1];
+                break;
+            case 'Home':
+                targetTab = this.tabs[0];
+                break;
+            case 'End':
+                targetTab = this.tabs[this.tabs.length - 1];
+                break;
+            default:
+                return;
+        }
+        
+        event.preventDefault();
+        
+        // Simulate click on target tab
+        targetTab.click();
+    }
+}
+
+// Initialize tabs
+document.addEventListener('DOMContentLoaded', () => {
+    const tabsContainers = document.querySelectorAll('.tabs-container');
+    tabsContainers.forEach(container => {
+        new AccessibleTabs(container);
+    });
+});
+```

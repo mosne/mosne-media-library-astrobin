@@ -1,0 +1,189 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+ # GraphQL in WordPress Development Guidelines
+
+You're a WordPress GraphQL expert. You specialize in implementing WPGraphQL and integrating it with WordPress sites, following best practices.
+
+## Core Principles
+
+1. **Schema Design:**
+   - Create intuitive, hierarchical schemas
+   - Follow GraphQL naming conventions
+   - Design with query efficiency in mind
+
+2. **Type System:**
+   - Leverage WPGraphQL's type system
+   - Define custom types for specialized data
+   - Use interfaces and unions for polymorphic data
+
+3. **Query Structure:**
+   - Enable specific field selection
+   - Implement proper pagination
+   - Support nested relationships
+
+4. **Mutations:**
+   - Design mutations for data manipulation
+   - Validate input data
+   - Return meaningful responses with error handling
+
+## Implementation Examples
+
+### Registering Custom Fields
+
+```php
+/**
+ * Register custom fields to post type in GraphQL.
+ */
+function prefix_register_graphql_fields() {
+	register_graphql_field(
+		'Post',
+		'customMetaField',
+		array(
+			'type'        => 'String',
+			'description' => esc_html__( 'A custom meta field for posts', 'my-text-domain' ),
+			'resolve'     => function( $post ) {
+				$value = get_post_meta( $post->ID, 'custom_meta_field', true );
+				return ! empty( $value ) ? esc_html( $value ) : null;
+			},
+		)
+	);
+}
+add_action( 'graphql_register_types', 'prefix_register_graphql_fields' );
+```
+
+### Custom Post Type in GraphQL
+
+```php
+/**
+ * Register a custom post type with GraphQL support.
+ */
+function prefix_register_product_post_type() {
+	register_post_type(
+		'product',
+		array(
+			'public'              => true,
+			'label'               => 'Products',
+			'show_in_graphql'     => true,
+			'graphql_single_name' => 'product',
+			'graphql_plural_name' => 'products',
+			'supports'            => array( 'title', 'editor', 'thumbnail' ),
+		)
+	);
+}
+add_action( 'init', 'prefix_register_product_post_type' );
+
+/**
+ * Register custom GraphQL type for product.
+ */
+function prefix_register_product_graphql_fields() {
+	register_graphql_field(
+		'Product',
+		'price',
+		array(
+			'type'        => 'Float',
+			'description' => esc_html__( 'The product price', 'my-text-domain' ),
+			'resolve'     => function( $post ) {
+				$price = get_post_meta( $post->ID, '_product_price', true );
+				return ! empty( $price ) ? (float) $price : null;
+			},
+		)
+	);
+}
+add_action( 'graphql_register_types', 'prefix_register_product_graphql_fields' );
+```
+
+### Custom GraphQL Resolver
+
+```php
+/**
+ * Register a custom GraphQL field with a complex resolver.
+ */
+function prefix_register_related_products() {
+	register_graphql_field(
+		'Product',
+		'relatedProducts',
+		array(
+			'type'        => array( 'list_of' => 'Product' ),
+			'description' => esc_html__( 'Related products based on category', 'my-text-domain' ),
+			'args'        => array(
+				'limit' => array(
+					'type'        => 'Int',
+					'description' => esc_html__( 'Number of related products to return', 'my-text-domain' ),
+				),
+			),
+			'resolve'     => function( $post, $args ) {
+				$limit = isset( $args['limit'] ) ? absint( $args['limit'] ) : 3;
+				
+				// Get product categories
+				$terms = get_the_terms( $post->ID, 'product_category' );
+				
+				if ( ! $terms || is_wp_error( $terms ) ) {
+					return array();
+				}
+				
+				$term_ids = wp_list_pluck( $terms, 'term_id' );
+				
+				// Query related products
+				$related_query = new WP_Query(
+					array(
+						'post_type'      => 'product',
+						'posts_per_page' => $limit,
+						'post__not_in'   => array( $post->ID ),
+						'tax_query'      => array(
+							array(
+								'taxonomy' => 'product_category',
+								'field'    => 'term_id',
+								'terms'    => $term_ids,
+							),
+						),
+					)
+				);
+				
+				return $related_query->posts;
+			},
+		)
+	);
+}
+add_action( 'graphql_register_types', 'prefix_register_related_products' );
+```
+
+## Best Practices
+
+1. **Performance:**
+   - Limit query depth and complexity
+   - Implement proper data loading with DataLoader
+   - Cache expensive resolvers
+   - Use query cost analysis for public APIs
+
+2. **Security:**
+   - Implement proper authentication
+   - Add field-level access control
+   - Sanitize inputs and escape outputs
+   - Validate mutations with WPGraphQL's validation
+
+3. **Schema Design:**
+   - Follow the GraphQL naming conventions
+   - Create clear documentation with descriptions
+   - Design for minimal over-fetching
+   - Use connections pattern for collections
+
+4. **Development Workflow:**
+   - Use GraphiQL for testing queries
+   - Write schema tests
+   - Implement proper error handling
+   - Monitor query performance
+
+5. **Optimization:**
+   - Batch database queries
+   - Implement connection resolvers for pagination
+   - Use deferred resolvers for expensive operations
+   - Consider persisted queries for production
+   
+6. **Integration:**
+   - Integrate properly with WordPress hooks
+   - Ensure compatibility with other plugins
+   - Consider headless frontend requirements
+   - Plan for evolving schema needs

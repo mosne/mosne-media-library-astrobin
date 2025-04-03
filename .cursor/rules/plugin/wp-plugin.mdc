@@ -1,0 +1,455 @@
+---
+description: Guidelines for custom plugin development in WordPress
+globs: **/*.php,**/plugins/**
+alwaysApply: false
+---
+# WordPress Plugin Development Guidelines
+
+You're a WordPress plugin development expert. Generate high-quality code that follows best practices for creating custom WordPress plugins.
+
+## General Guidelines
+
+1. **Plugin Structure:**
+   - Use a clear file organization
+   - Follow WordPress naming conventions
+   - Implement proper namespacing
+   - Reference [wp-wpcs.mdc](wp-wpcs.mdc) for coding standards
+
+2. **Security:**
+   - Validate and sanitize all inputs
+   - Escape all outputs
+   - Use nonces for forms
+   - Implement proper capability checks
+   - Reference [wp-security.mdc](wp-security.mdc) for security best practices
+
+3. **Performance:**
+   - Optimize database queries
+   - Cache expensive operations
+   - Load assets only when needed
+   - Reference [wp-performance.mdc](wp-performance.mdc) for performance best practices
+
+## Code Examples
+
+### Plugin Boilerplate
+```php
+<?php
+/**
+ * Plugin Name: Custom Plugin
+ * Plugin URI: https://example.com/plugins/custom-plugin
+ * Description: A custom plugin for WordPress.
+ * Version: 1.0.0
+ * Author: Your Name
+ * Author URI: https://example.com
+ * License: GPL-2.0+
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
+ * Text Domain: custom-plugin
+ * Domain Path: /languages
+ *
+ * @package CustomPlugin
+ */
+
+// If this file is called directly, abort.
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Define plugin constants.
+define('CUSTOM_PLUGIN_VERSION', '1.0.0');
+define('CUSTOM_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define('CUSTOM_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('CUSTOM_PLUGIN_BASENAME', plugin_basename(__FILE__));
+
+// Autoloader.
+spl_autoload_register(function ($class) {
+    // Project-specific namespace prefix.
+    $prefix = 'CustomPlugin\\';
+    
+    // Base directory for the namespace prefix.
+    $base_dir = CUSTOM_PLUGIN_PATH . 'includes/';
+    
+    // Does the class use the namespace prefix?
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        // No, move to the next registered autoloader.
+        return;
+    }
+    
+    // Get the relative class name.
+    $relative_class = substr($class, $len);
+    
+    // Replace namespace separators with directory separators.
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+    
+    // If the file exists, require it.
+    if (file_exists($file)) {
+        require $file;
+    }
+});
+
+// Include the main plugin class.
+require_once CUSTOM_PLUGIN_PATH . 'includes/class-plugin.php';
+
+// Activation hook.
+register_activation_hook(__FILE__, ['CustomPlugin\\Plugin', 'activate']);
+
+// Deactivation hook.
+register_deactivation_hook(__FILE__, ['CustomPlugin\\Plugin', 'deactivate']);
+
+// Initialize the plugin.
+add_action('plugins_loaded', ['CustomPlugin\\Plugin', 'get_instance']);
+```
+
+### Main Plugin Class
+```php
+<?php
+/**
+ * Main plugin class.
+ *
+ * @package CustomPlugin
+ */
+
+namespace CustomPlugin;
+
+/**
+ * Main plugin class.
+ */
+class Plugin {
+    /**
+     * Plugin instance.
+     *
+     * @var Plugin
+     */
+    private static $instance = null;
+    
+    /**
+     * Get plugin instance.
+     *
+     * @return Plugin
+     */
+    public static function get_instance() {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+    
+    /**
+     * Constructor.
+     */
+    private function __construct() {
+        $this->load_dependencies();
+        $this->set_locale();
+        $this->define_admin_hooks();
+        $this->define_public_hooks();
+    }
+    
+    /**
+     * Load dependencies.
+     */
+    private function load_dependencies() {
+        // Load required files.
+    }
+    
+    /**
+     * Set locale.
+     */
+    private function set_locale() {
+        add_action('plugins_loaded', [$this, 'load_plugin_textdomain']);
+    }
+    
+    /**
+     * Define admin hooks.
+     */
+    private function define_admin_hooks() {
+        // Admin hooks.
+    }
+    
+    /**
+     * Define public hooks.
+     */
+    private function define_public_hooks() {
+        // Public hooks.
+    }
+    
+    /**
+     * Load plugin textdomain.
+     */
+    public function load_plugin_textdomain() {
+        load_plugin_textdomain(
+            'custom-plugin',
+            false,
+            dirname(CUSTOM_PLUGIN_BASENAME) . '/languages/'
+        );
+    }
+    
+    /**
+     * Activate plugin.
+     */
+    public static function activate() {
+        // Activation code.
+    }
+    
+    /**
+     * Deactivate plugin.
+     */
+    public static function deactivate() {
+        // Deactivation code.
+    }
+}
+```
+
+### Admin Class
+```php
+<?php
+/**
+ * Admin functionality.
+ *
+ * @package CustomPlugin
+ */
+
+namespace CustomPlugin\Admin;
+
+/**
+ * Admin class.
+ */
+class Admin {
+    /**
+     * Initialize the class.
+     */
+    public function __construct() {
+        add_action('admin_menu', [$this, 'add_menu_page']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_assets']);
+        add_action('admin_init', [$this, 'register_settings']);
+    }
+    
+    /**
+     * Add menu page.
+     */
+    public function add_menu_page() {
+        add_menu_page(
+            __('Custom Plugin', 'custom-plugin'),
+            __('Custom Plugin', 'custom-plugin'),
+            'manage_options',
+            'custom-plugin',
+            [$this, 'render_settings_page'],
+            'dashicons-admin-generic',
+            20
+        );
+    }
+    
+    /**
+     * Enqueue assets.
+     *
+     * @param string $hook_suffix The current admin page.
+     */
+    public function enqueue_assets($hook_suffix) {
+        if ('toplevel_page_custom-plugin' !== $hook_suffix) {
+            return;
+        }
+        
+        wp_enqueue_style(
+            'custom-plugin-admin',
+            CUSTOM_PLUGIN_URL . 'assets/css/admin.css',
+            [],
+            CUSTOM_PLUGIN_VERSION
+        );
+        
+        wp_enqueue_script(
+            'custom-plugin-admin',
+            CUSTOM_PLUGIN_URL . 'assets/js/admin.js',
+            ['jquery'],
+            CUSTOM_PLUGIN_VERSION,
+            true
+        );
+    }
+    
+    /**
+     * Register settings.
+     */
+    public function register_settings() {
+        register_setting(
+            'custom_plugin_settings',
+            'custom_plugin_option',
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => '',
+            ]
+        );
+        
+        add_settings_section(
+            'custom_plugin_section',
+            __('Settings', 'custom-plugin'),
+            [$this, 'render_section'],
+            'custom-plugin'
+        );
+        
+        add_settings_field(
+            'custom_plugin_option',
+            __('Option', 'custom-plugin'),
+            [$this, 'render_option_field'],
+            'custom-plugin',
+            'custom_plugin_section'
+        );
+    }
+    
+    /**
+     * Render section.
+     */
+    public function render_section() {
+        echo '<p>' . esc_html__('Configure plugin settings.', 'custom-plugin') . '</p>';
+    }
+    
+    /**
+     * Render option field.
+     */
+    public function render_option_field() {
+        $option = get_option('custom_plugin_option');
+        ?>
+        <input type="text" name="custom_plugin_option" value="<?php echo esc_attr($option); ?>" class="regular-text">
+        <?php
+    }
+    
+    /**
+     * Render settings page.
+     */
+    public function render_settings_page() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
+        if (isset($_GET['settings-updated'])) {
+            add_settings_error(
+                'custom_plugin_messages',
+                'custom_plugin_message',
+                __('Settings saved.', 'custom-plugin'),
+                'updated'
+            );
+        }
+        ?>
+        <div class="wrap">
+            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            <?php settings_errors('custom_plugin_messages'); ?>
+            <form method="post" action="options.php">
+                <?php
+                settings_fields('custom_plugin_settings');
+                do_settings_sections('custom-plugin');
+                submit_button();
+                ?>
+            </form>
+        </div>
+        <?php
+    }
+}
+```
+
+### Custom Post Type Registration
+```php
+<?php
+/**
+ * Custom post type registration.
+ *
+ * @package CustomPlugin
+ */
+
+namespace CustomPlugin\PostTypes;
+
+/**
+ * Post Types class.
+ */
+class PostTypes {
+    /**
+     * Initialize the class.
+     */
+    public function __construct() {
+        add_action('init', [$this, 'register_post_types']);
+        add_action('init', [$this, 'register_taxonomies']);
+    }
+    
+    /**
+     * Register custom post types.
+     */
+    public function register_post_types() {
+        $labels = [
+            'name'                  => _x('Products', 'Post type general name', 'custom-plugin'),
+            'singular_name'         => _x('Product', 'Post type singular name', 'custom-plugin'),
+            'menu_name'             => _x('Products', 'Admin Menu text', 'custom-plugin'),
+            'name_admin_bar'        => _x('Product', 'Add New on Toolbar', 'custom-plugin'),
+            'add_new'               => __('Add New', 'custom-plugin'),
+            'add_new_item'          => __('Add New Product', 'custom-plugin'),
+            'new_item'              => __('New Product', 'custom-plugin'),
+            'edit_item'             => __('Edit Product', 'custom-plugin'),
+            'view_item'             => __('View Product', 'custom-plugin'),
+            'all_items'             => __('All Products', 'custom-plugin'),
+            'search_items'          => __('Search Products', 'custom-plugin'),
+            'parent_item_colon'     => __('Parent Products:', 'custom-plugin'),
+            'not_found'             => __('No products found.', 'custom-plugin'),
+            'not_found_in_trash'    => __('No products found in Trash.', 'custom-plugin'),
+            'featured_image'        => _x('Product Cover Image', 'Overrides the "Featured Image" phrase', 'custom-plugin'),
+            'set_featured_image'    => _x('Set cover image', 'Overrides the "Set featured image" phrase', 'custom-plugin'),
+            'remove_featured_image' => _x('Remove cover image', 'Overrides the "Remove featured image" phrase', 'custom-plugin'),
+            'use_featured_image'    => _x('Use as cover image', 'Overrides the "Use as featured image" phrase', 'custom-plugin'),
+            'archives'              => _x('Product archives', 'The post type archive label used in nav menus', 'custom-plugin'),
+            'insert_into_item'      => _x('Insert into product', 'Overrides the "Insert into post" phrase', 'custom-plugin'),
+            'uploaded_to_this_item' => _x('Uploaded to this product', 'Overrides the "Uploaded to this post" phrase', 'custom-plugin'),
+            'filter_items_list'     => _x('Filter products list', 'Screen reader text for the filter links heading on the post type listing screen', 'custom-plugin'),
+            'items_list_navigation' => _x('Products list navigation', 'Screen reader text for the pagination heading on the post type listing screen', 'custom-plugin'),
+            'items_list'            => _x('Products list', 'Screen reader text for the items list heading on the post type listing screen', 'custom-plugin'),
+        ];
+        
+        $args = [
+            'labels'             => $labels,
+            'public'             => true,
+            'publicly_queryable' => true,
+            'show_ui'            => true,
+            'show_in_menu'       => true,
+            'query_var'          => true,
+            'rewrite'            => ['slug' => 'product'],
+            'capability_type'    => 'post',
+            'has_archive'        => true,
+            'hierarchical'       => false,
+            'menu_position'      => null,
+            'supports'           => ['title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments'],
+            'show_in_rest'       => true,
+        ];
+        
+        register_post_type('product', $args);
+    }
+    
+    /**
+     * Register custom taxonomies.
+     */
+    public function register_taxonomies() {
+        $labels = [
+            'name'                       => _x('Categories', 'Taxonomy general name', 'custom-plugin'),
+            'singular_name'              => _x('Category', 'Taxonomy singular name', 'custom-plugin'),
+            'search_items'               => __('Search Categories', 'custom-plugin'),
+            'popular_items'              => __('Popular Categories', 'custom-plugin'),
+            'all_items'                  => __('All Categories', 'custom-plugin'),
+            'parent_item'                => __('Parent Category', 'custom-plugin'),
+            'parent_item_colon'          => __('Parent Category:', 'custom-plugin'),
+            'edit_item'                  => __('Edit Category', 'custom-plugin'),
+            'update_item'                => __('Update Category', 'custom-plugin'),
+            'add_new_item'               => __('Add New Category', 'custom-plugin'),
+            'new_item_name'              => __('New Category Name', 'custom-plugin'),
+            'separate_items_with_commas' => __('Separate categories with commas', 'custom-plugin'),
+            'add_or_remove_items'        => __('Add or remove categories', 'custom-plugin'),
+            'choose_from_most_used'      => __('Choose from the most used categories', 'custom-plugin'),
+            'not_found'                  => __('No categories found.', 'custom-plugin'),
+            'menu_name'                  => __('Categories', 'custom-plugin'),
+        ];
+        
+        $args = [
+            'hierarchical'      => true,
+            'labels'            => $labels,
+            'show_ui'           => true,
+            'show_admin_column' => true,
+            'query_var'         => true,
+            'rewrite'           => ['slug' => 'product-category'],
+            'show_in_rest'      => true,
+        ];
+        
+        register_taxonomy('product_category', ['product'], $args);
+    }
+}
+```

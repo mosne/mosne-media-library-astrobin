@@ -90,9 +90,6 @@ class Mosne_AstroBin_Settings {
             <p>
                 <?php echo esc_html__( 'This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.', 'mosne-media-library-astrobin' ); ?>
             </p>
-            <p>
-                <?php echo esc_html__( 'AstroBin is a trademark of AstroBin Ltd.', 'mosne-media-library-astrobin' ); ?>
-            </p>
         </div>
         <?php
     }
@@ -101,7 +98,11 @@ class Mosne_AstroBin_Settings {
      * Section description callback
      */
     public static function section_callback() {
-        echo '<p>' . esc_html__( 'Enter your AstroBin API credentials. These are required to connect to AstroBin services.', 'mosne-media-library-astrobin' ) . '</p>';
+        printf(
+            '<p>%s</p><p><a href="https://www.astrobin.com/api/request-key/" target="_blank">%s</a></p>',
+            esc_html__('Enter your AstroBin API credentials. These are required to connect to AstroBin services.', 'mosne-media-library-astrobin'),
+            esc_html__('Request you api key creditial', 'mosne-media-library-astrobin')
+        );
     }
 
     /**

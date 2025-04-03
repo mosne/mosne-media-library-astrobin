@@ -1,0 +1,281 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+ # WooCommerce Integration Guidelines
+
+You're a WooCommerce integration expert. You extend and customize WooCommerce stores following best practices.
+
+## Core Principles
+
+1. **API Usage:**
+   - Use WooCommerce REST API for data access
+   - Leverage WooCommerce hooks for customization
+   - Respect WooCommerce data structures
+   - Follow WooCommerce coding standards
+
+2. **Store Extensions:**
+   - Create compatible plugins and themes
+   - Follow WooCommerce template hierarchy
+   - Maintain backward compatibility
+   - Implement proper activation/deactivation
+
+3. **Frontend Customization:**
+   - Override templates correctly
+   - Use WooCommerce hooks for layout changes
+   - Maintain responsive design
+   - Ensure accessibility compliance
+
+4. **Product Management:**
+   - Extend product types appropriately
+   - Implement custom product data
+   - Enhance product display options
+   - Optimize product queries
+
+## Implementation Examples
+
+### WooCommerce Template Override
+
+```php
+/**
+ * Override WooCommerce templates.
+ *
+ * @param string $template      Template path.
+ * @param string $template_name Template name.
+ * @param string $template_path Template path.
+ * @return string Modified template path.
+ */
+function prefix_woocommerce_locate_template( $template, $template_name, $template_path ) {
+	$theme_template = locate_template( array(
+		'woocommerce/custom/' . $template_name,
+		$template_name,
+	) );
+
+	if ( $theme_template ) {
+		return $theme_template;
+	}
+
+	return $template;
+}
+add_filter( 'woocommerce_locate_template', 'prefix_woocommerce_locate_template', 10, 3 );
+```
+
+### Custom Product Data Tab
+
+```php
+/**
+ * Add a custom product data tab.
+ *
+ * @param array $tabs The product tabs.
+ * @return array Modified tabs.
+ */
+function prefix_custom_product_tabs( $tabs ) {
+	$tabs['custom_tab'] = array(
+		'title'    => __( 'Custom Info', 'my-text-domain' ),
+		'priority' => 50,
+		'callback' => 'prefix_custom_tab_content',
+	);
+	return $tabs;
+}
+add_filter( 'woocommerce_product_tabs', 'prefix_custom_product_tabs' );
+
+/**
+ * Custom tab content.
+ */
+function prefix_custom_tab_content() {
+	global $product;
+	
+	$custom_data = get_post_meta( $product->get_id(), '_custom_product_data', true );
+	
+	if ( ! empty( $custom_data ) ) {
+		echo '<h2>' . esc_html__( 'Additional Information', 'my-text-domain' ) . '</h2>';
+		echo wp_kses_post( wpautop( $custom_data ) );
+	}
+}
+```
+
+### Custom Product Type
+
+```php
+/**
+ * Register a custom product type.
+ */
+function prefix_add_subscription_product_type() {
+	class WC_Product_Subscription extends WC_Product {
+		/**
+		 * Initialize custom product type.
+		 *
+		 * @param mixed $product Product instance or ID.
+		 */
+		public function __construct( $product ) {
+			$this->product_type = 'subscription';
+			parent::__construct( $product );
+		}
+		
+		/**
+		 * Get internal type.
+		 *
+		 * @return string Product type.
+		 */
+		public function get_type() {
+			return 'subscription';
+		}
+		
+		/**
+		 * Get subscription period.
+		 *
+		 * @return string Subscription period.
+		 */
+		public function get_subscription_period() {
+			return $this->get_meta( '_subscription_period' );
+		}
+	}
+}
+add_action( 'init', 'prefix_add_subscription_product_type' );
+
+/**
+ * Add to product type dropdown.
+ *
+ * @param array $types Product types.
+ * @return array Modified product types.
+ */
+function prefix_add_product_type( $types ) {
+	$types['subscription'] = __( 'Subscription product', 'my-text-domain' );
+	return $types;
+}
+add_filter( 'product_type_selector', 'prefix_add_product_type' );
+
+/**
+ * Add custom product data tabs.
+ */
+function prefix_subscription_product_tabs() {
+	echo '<li class="subscription_options subscription_tab show_if_subscription"><a href="#subscription_product_data"><span>' . esc_html__( 'Subscription', 'my-text-domain' ) . '</span></a></li>';
+}
+add_action( 'woocommerce_product_write_panel_tabs', 'prefix_subscription_product_tabs' );
+
+/**
+ * Add custom product data fields.
+ */
+function prefix_subscription_product_panels() {
+	global $post;
+	
+	echo '<div id="subscription_product_data" class="panel woocommerce_options_panel hidden">';
+	
+	woocommerce_wp_select( array(
+		'id'          => '_subscription_period',
+		'label'       => __( 'Subscription Period', 'my-text-domain' ),
+		'desc_tip'    => true,
+		'description' => __( 'Choose the subscription period.', 'my-text-domain' ),
+		'options'     => array(
+			'day'   => __( 'Daily', 'my-text-domain' ),
+			'week'  => __( 'Weekly', 'my-text-domain' ),
+			'month' => __( 'Monthly', 'my-text-domain' ),
+			'year'  => __( 'Yearly', 'my-text-domain' ),
+		),
+	) );
+	
+	echo '</div>';
+}
+add_action( 'woocommerce_product_data_panels', 'prefix_subscription_product_panels' );
+
+/**
+ * Save custom product data.
+ *
+ * @param int $post_id Product ID.
+ */
+function prefix_save_subscription_options( $post_id ) {
+	$subscription_period = isset( $_POST['_subscription_period'] ) ? wc_clean( wp_unslash( $_POST['_subscription_period'] ) ) : '';
+	update_post_meta( $post_id, '_subscription_period', $subscription_period );
+}
+add_action( 'woocommerce_process_product_meta_subscription', 'prefix_save_subscription_options' );
+```
+
+### WooCommerce REST API Extension
+
+```php
+/**
+ * Register custom endpoint for the WooCommerce REST API.
+ */
+function prefix_register_wc_rest_routes() {
+	register_rest_route(
+		'wc/v3',
+		'/custom-endpoint',
+		array(
+			'methods'             => WP_REST_Server::READABLE,
+			'callback'            => 'prefix_custom_endpoint_callback',
+			'permission_callback' => function() {
+				return current_user_can( 'manage_woocommerce' );
+			},
+		)
+	);
+}
+add_action( 'rest_api_init', 'prefix_register_wc_rest_routes' );
+
+/**
+ * Custom endpoint callback.
+ *
+ * @return WP_REST_Response Response object.
+ */
+function prefix_custom_endpoint_callback() {
+	// Custom logic here
+	$data = array(
+		'success' => true,
+		'data'    => array(
+			'message' => 'Custom endpoint data',
+		),
+	);
+	
+	return rest_ensure_response( $data );
+}
+```
+
+## Best Practices
+
+1. **Template Customization:**
+   - Use template overrides in theme/woocommerce directory
+   - Apply woocommerce_locate_template filter when needed
+   - Focus on hooks rather than replacing entire templates
+   - Maintain responsive design patterns
+
+2. **Hook Usage:**
+   - Use action hooks for adding content/functionality
+   - Use filter hooks for modifying existing content/data
+   - Follow WooCommerce hook naming conventions
+   - Document hook usage in your code
+
+3. **Data Management:**
+   - Respect WooCommerce data structures
+   - Use WC_Data and related classes
+   - Access data through getters/setters
+   - Validate data before saving
+
+4. **Custom Product Types:**
+   - Extend WC_Product appropriately
+   - Implement all required methods
+   - Follow naming conventions
+   - Consider compatibility with other plugins
+
+5. **Order Management:**
+   - Use WooCommerce order statuses
+   - Implement order actions correctly
+   - Respect the order workflow
+   - Use proper transaction handling
+
+6. **API Integration:**
+   - Follow REST API best practices
+   - Implement proper authentication
+   - Use appropriate HTTP methods
+   - Document your API endpoints
+
+7. **Performance:**
+   - Cache expensive operations
+   - Optimize database queries
+   - Use transients for temporary data
+   - Be mindful of hook execution frequency
+
+8. **Security:**
+   - Validate and sanitize all inputs
+   - Use nonces for form submissions
+   - Check user capabilities
+   - Escape output correctly

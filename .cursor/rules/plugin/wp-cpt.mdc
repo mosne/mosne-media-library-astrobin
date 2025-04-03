@@ -1,0 +1,264 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+ # Custom Post Types & Taxonomies Guidelines
+
+You're a WordPress custom data expert. You create and manage custom post types and taxonomies following best practices.
+
+## Core Principles
+
+1. **Post Type Registration:**
+   - Use clear, descriptive names
+   - Configure proper labels and capabilities
+   - Set appropriate supports and rewrite rules
+   - Consider REST API integration
+
+2. **Taxonomy Registration:**
+   - Create meaningful relationships
+   - Define hierarchical structure appropriately
+   - Set clear labels and term relationships
+   - Configure meta capabilities
+
+3. **UI Integration:**
+   - Design intuitive admin columns
+   - Implement custom metaboxes
+   - Provide contextual help
+   - Create logical admin menu organization
+
+4. **Data Architecture:**
+   - Plan taxonomy-to-post-type relationships
+   - Consider query performance
+   - Document data structures
+   - Implement proper metadata storage
+
+## Implementation Examples
+
+### Custom Post Type Registration
+
+```php
+/**
+ * Register a custom post type for products.
+ */
+function prefix_register_product_post_type() {
+	$labels = array(
+		'name'                  => _x( 'Products', 'Post type general name', 'my-text-domain' ),
+		'singular_name'         => _x( 'Product', 'Post type singular name', 'my-text-domain' ),
+		'menu_name'             => _x( 'Products', 'Admin Menu text', 'my-text-domain' ),
+		'name_admin_bar'        => _x( 'Product', 'Add New on Toolbar', 'my-text-domain' ),
+		'add_new'               => __( 'Add New', 'my-text-domain' ),
+		'add_new_item'          => __( 'Add New Product', 'my-text-domain' ),
+		'new_item'              => __( 'New Product', 'my-text-domain' ),
+		'edit_item'             => __( 'Edit Product', 'my-text-domain' ),
+		'view_item'             => __( 'View Product', 'my-text-domain' ),
+		'all_items'             => __( 'All Products', 'my-text-domain' ),
+		'search_items'          => __( 'Search Products', 'my-text-domain' ),
+		'parent_item_colon'     => __( 'Parent Products:', 'my-text-domain' ),
+		'not_found'             => __( 'No products found.', 'my-text-domain' ),
+		'not_found_in_trash'    => __( 'No products found in Trash.', 'my-text-domain' ),
+		'featured_image'        => _x( 'Product Cover Image', 'Overrides the "Featured Image" phrase', 'my-text-domain' ),
+		'set_featured_image'    => _x( 'Set cover image', 'Overrides the "Set featured image" phrase', 'my-text-domain' ),
+		'remove_featured_image' => _x( 'Remove cover image', 'Overrides the "Remove featured image" phrase', 'my-text-domain' ),
+		'use_featured_image'    => _x( 'Use as cover image', 'Overrides the "Use as featured image" phrase', 'my-text-domain' ),
+		'archives'              => _x( 'Product archives', 'The post type archive label used in nav menus', 'my-text-domain' ),
+		'insert_into_item'      => _x( 'Insert into product', 'Overrides the "Insert into post" phrase', 'my-text-domain' ),
+		'uploaded_to_this_item' => _x( 'Uploaded to this product', 'Overrides the "Uploaded to this post" phrase', 'my-text-domain' ),
+		'filter_items_list'     => _x( 'Filter products list', 'Screen reader text for the filter links', 'my-text-domain' ),
+		'items_list_navigation' => _x( 'Products list navigation', 'Screen reader text for the pagination', 'my-text-domain' ),
+		'items_list'            => _x( 'Products list', 'Screen reader text for the items list', 'my-text-domain' ),
+	);
+
+	$args = array(
+		'labels'             => $labels,
+		'public'             => true,
+		'publicly_queryable' => true,
+		'show_ui'            => true,
+		'show_in_menu'       => true,
+		'query_var'          => true,
+		'rewrite'            => array( 'slug' => 'product' ),
+		'capability_type'    => 'post',
+		'has_archive'        => true,
+		'hierarchical'       => false,
+		'menu_position'      => 20,
+		'menu_icon'          => 'dashicons-cart',
+		'supports'           => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
+		'show_in_rest'       => true,
+	);
+
+	register_post_type( 'product', $args );
+}
+add_action( 'init', 'prefix_register_product_post_type' );
+```
+
+### Custom Taxonomy Registration
+
+```php
+/**
+ * Register a custom taxonomy for product categories.
+ */
+function prefix_register_product_category_taxonomy() {
+	$labels = array(
+		'name'                       => _x( 'Product Categories', 'taxonomy general name', 'my-text-domain' ),
+		'singular_name'              => _x( 'Product Category', 'taxonomy singular name', 'my-text-domain' ),
+		'search_items'               => __( 'Search Product Categories', 'my-text-domain' ),
+		'popular_items'              => __( 'Popular Product Categories', 'my-text-domain' ),
+		'all_items'                  => __( 'All Product Categories', 'my-text-domain' ),
+		'parent_item'                => __( 'Parent Product Category', 'my-text-domain' ),
+		'parent_item_colon'          => __( 'Parent Product Category:', 'my-text-domain' ),
+		'edit_item'                  => __( 'Edit Product Category', 'my-text-domain' ),
+		'view_item'                  => __( 'View Product Category', 'my-text-domain' ),
+		'update_item'                => __( 'Update Product Category', 'my-text-domain' ),
+		'add_new_item'               => __( 'Add New Product Category', 'my-text-domain' ),
+		'new_item_name'              => __( 'New Product Category Name', 'my-text-domain' ),
+		'separate_items_with_commas' => __( 'Separate product categories with commas', 'my-text-domain' ),
+		'add_or_remove_items'        => __( 'Add or remove product categories', 'my-text-domain' ),
+		'choose_from_most_used'      => __( 'Choose from the most used product categories', 'my-text-domain' ),
+		'not_found'                  => __( 'No product categories found.', 'my-text-domain' ),
+		'no_terms'                   => __( 'No product categories', 'my-text-domain' ),
+		'menu_name'                  => __( 'Product Categories', 'my-text-domain' ),
+		'items_list_navigation'      => __( 'Product categories list navigation', 'my-text-domain' ),
+		'items_list'                 => __( 'Product categories list', 'my-text-domain' ),
+		'back_to_items'              => __( '← Back to product categories', 'my-text-domain' ),
+	);
+
+	$args = array(
+		'labels'             => $labels,
+		'hierarchical'       => true,
+		'public'             => true,
+		'show_ui'            => true,
+		'show_admin_column'  => true,
+		'show_in_nav_menus'  => true,
+		'show_tagcloud'      => true,
+		'query_var'          => true,
+		'rewrite'            => array( 'slug' => 'product-category' ),
+		'show_in_rest'       => true,
+	);
+
+	register_taxonomy( 'product_category', array( 'product' ), $args );
+}
+add_action( 'init', 'prefix_register_product_category_taxonomy' );
+```
+
+### Custom Admin Columns
+
+```php
+/**
+ * Add custom columns to product post type.
+ *
+ * @param array $columns The existing columns.
+ * @return array Modified columns.
+ */
+function prefix_add_product_columns( $columns ) {
+	$new_columns = array();
+	
+	// Insert columns after title
+	foreach ( $columns as $key => $value ) {
+		$new_columns[ $key ] = $value;
+		
+		if ( 'title' === $key ) {
+			$new_columns['product_price'] = __( 'Price', 'my-text-domain' );
+			$new_columns['product_sku']   = __( 'SKU', 'my-text-domain' );
+		}
+	}
+	
+	return $new_columns;
+}
+add_filter( 'manage_product_posts_columns', 'prefix_add_product_columns' );
+
+/**
+ * Display data in custom product columns.
+ *
+ * @param string $column  The column name.
+ * @param int    $post_id The post ID.
+ */
+function prefix_show_product_columns( $column, $post_id ) {
+	switch ( $column ) {
+		case 'product_price':
+			$price = get_post_meta( $post_id, '_product_price', true );
+			echo ! empty( $price ) ? esc_html( '$' . number_format( $price, 2 ) ) : '—';
+			break;
+			
+		case 'product_sku':
+			$sku = get_post_meta( $post_id, '_product_sku', true );
+			echo ! empty( $sku ) ? esc_html( $sku ) : '—';
+			break;
+	}
+}
+add_action( 'manage_product_posts_custom_column', 'prefix_show_product_columns', 10, 2 );
+
+/**
+ * Make custom columns sortable.
+ *
+ * @param array $columns The sortable columns.
+ * @return array Modified sortable columns.
+ */
+function prefix_sortable_product_columns( $columns ) {
+	$columns['product_price'] = 'product_price';
+	$columns['product_sku']   = 'product_sku';
+	return $columns;
+}
+add_filter( 'manage_edit-product_sortable_columns', 'prefix_sortable_product_columns' );
+
+/**
+ * Sort custom columns.
+ *
+ * @param WP_Query $query The query object.
+ */
+function prefix_sort_product_columns( $query ) {
+	if ( ! is_admin() || ! $query->is_main_query() ) {
+		return;
+	}
+	
+	$orderby = $query->get( 'orderby' );
+	
+	if ( 'product_price' === $orderby ) {
+		$query->set( 'meta_key', '_product_price' );
+		$query->set( 'orderby', 'meta_value_num' );
+	}
+	
+	if ( 'product_sku' === $orderby ) {
+		$query->set( 'meta_key', '_product_sku' );
+		$query->set( 'orderby', 'meta_value' );
+	}
+}
+add_action( 'pre_get_posts', 'prefix_sort_product_columns' );
+```
+
+## Best Practices
+
+1. **Naming Conventions:**
+   - Use lowercase for post type names
+   - Use underscores for taxonomy names
+   - Choose clear, descriptive names
+   - Follow WordPress naming patterns
+
+2. **Labels and UI:**
+   - Provide complete label sets
+   - Use proper pluralization
+   - Add contextual help where needed
+   - Implement screen options
+
+3. **Architecture:**
+   - Plan relationships before implementation
+   - Consider query performance
+   - Use appropriate hierarchical settings
+   - Document post type and taxonomy relationships
+
+4. **Capabilities:**
+   - Define custom capabilities when needed
+   - Map to existing roles appropriately
+   - Consider data ownership models
+   - Implement proper capability checks
+
+5. **Performance:**
+   - Register post types/taxonomies early (init hook)
+   - Cache expensive taxonomy queries
+   - Optimize term relationship queries
+   - Be mindful of hierarchical taxonomy performance costs
+
+6. **Integration:**
+   - Enable REST API support when appropriate
+   - Implement Gutenberg block support
+   - Add template file support
+   - Consider search integration

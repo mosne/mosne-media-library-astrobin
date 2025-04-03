@@ -1,0 +1,349 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+ # Gutenberg Block Development Guidelines
+
+You're a WordPress Gutenberg blocks expert. You create custom blocks and block patterns following best practices.
+
+## Core Principles
+
+1. **Block Architecture:**
+   - Follow the WordPress block API
+   - Implement edit and save functions
+   - Register block metadata properly
+   - Design with reusability in mind
+
+2. **Component Structure:**
+   - Use React components effectively
+   - Implement the component hierarchy
+   - Leverage WordPress components
+   - Create reusable components
+
+3. **State Management:**
+   - Use block attributes for data
+   - Implement proper attribute registration
+   - Use context API when appropriate
+   - Manage side effects correctly
+
+4. **User Experience:**
+   - Create intuitive controls
+   - Implement responsive preview
+   - Add keyboard accessibility
+   - Design clear inspector panels
+
+## Implementation Examples
+
+### Basic Block Registration
+
+```js
+/**
+ * Registers a new block provided a unique name and an object defining its behavior.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-registration/
+ */
+import { registerBlockType } from '@wordpress/blocks';
+
+/**
+ * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
+ * All files containing `style` keyword are bundled together. The code used
+ * gets applied both to the front of your site and to the editor.
+ *
+ * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
+ */
+import './style.scss';
+
+/**
+ * Internal dependencies
+ */
+import Edit from './edit';
+import save from './save';
+import metadata from './block.json';
+
+/**
+ * Every block starts by registering a new block type definition.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-registration/
+ */
+registerBlockType( metadata.name, {
+	/**
+	 * @see ./edit.js
+	 */
+	edit: Edit,
+
+	/**
+	 * @see ./save.js
+	 */
+	save,
+} );
+```
+
+### Block Metadata (block.json)
+
+```json
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 2,
+	"name": "my-plugin/my-block",
+	"version": "0.1.0",
+	"title": "My Custom Block",
+	"category": "widgets",
+	"icon": "smiley",
+	"description": "A custom block for displaying content.",
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"]
+	},
+	"attributes": {
+		"title": {
+			"type": "string",
+			"source": "html",
+			"selector": "h2"
+		},
+		"content": {
+			"type": "string",
+			"source": "html",
+			"selector": "p"
+		},
+		"backgroundColor": {
+			"type": "string",
+			"default": "#ffffff"
+		},
+		"textColor": {
+			"type": "string",
+			"default": "#000000"
+		}
+	},
+	"textdomain": "my-plugin",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css"
+}
+```
+
+### Edit Component
+
+```jsx
+/**
+ * WordPress components that create the necessary UI elements for the block
+ *
+ * @see https://developer.wordpress.org/block-editor/packages/packages-components/
+ */
+import {
+	PanelBody,
+	ColorPalette,
+	TextControl,
+} from '@wordpress/components';
+
+/**
+ * React hook that is used to mark the block wrapper element.
+ * It provides all the necessary props like the class name.
+ *
+ * @see https://developer.wordpress.org/block-editor/packages/packages-block-editor/#useBlockProps
+ */
+import {
+	useBlockProps,
+	RichText,
+	InspectorControls,
+	ColorPaletteControl,
+} from '@wordpress/block-editor';
+
+/**
+ * The edit function describes the structure of your block in the context of the
+ * editor. This represents what the editor will render when the block is used.
+ *
+ * @param {Object}   props               Block props.
+ * @param {Object}   props.attributes    Block attributes.
+ * @param {Function} props.setAttributes Function to set block attributes.
+ * @return {WPElement} Element to render.
+ */
+export default function Edit( { attributes, setAttributes } ) {
+	const { title, content, backgroundColor, textColor } = attributes;
+	
+	const blockProps = useBlockProps( {
+		style: {
+			backgroundColor,
+			color: textColor,
+		},
+	} );
+	
+	return (
+		<>
+			<InspectorControls>
+				<PanelBody title="Color Settings" initialOpen={ true }>
+					<ColorPaletteControl
+						label="Background Color"
+						value={ backgroundColor }
+						onChange={ ( color ) => setAttributes( { backgroundColor: color } ) }
+					/>
+					<ColorPaletteControl
+						label="Text Color"
+						value={ textColor }
+						onChange={ ( color ) => setAttributes( { textColor: color } ) }
+					/>
+				</PanelBody>
+			</InspectorControls>
+			
+			<div { ...blockProps }>
+				<RichText
+					tagName="h2"
+					value={ title }
+					onChange={ ( value ) => setAttributes( { title: value } ) }
+					placeholder="Enter title..."
+				/>
+				<RichText
+					tagName="p"
+					value={ content }
+					onChange={ ( value ) => setAttributes( { content: value } ) }
+					placeholder="Enter content..."
+				/>
+			</div>
+		</>
+	);
+}
+```
+
+### Save Component
+
+```jsx
+/**
+ * React hook that is used to mark the block wrapper element.
+ * It provides all the necessary props like the class name.
+ *
+ * @see https://developer.wordpress.org/block-editor/packages/packages-block-editor/#useBlockProps
+ */
+import { useBlockProps, RichText } from '@wordpress/block-editor';
+
+/**
+ * The save function defines the way in which the different attributes should
+ * be combined into the final markup, which is then serialized by the block
+ * editor into `post_content`.
+ *
+ * @param {Object} props            Block props.
+ * @param {Object} props.attributes Block attributes.
+ * @return {WPElement} Element to render.
+ */
+export default function save( { attributes } ) {
+	const { title, content, backgroundColor, textColor } = attributes;
+	
+	const blockProps = useBlockProps.save( {
+		style: {
+			backgroundColor,
+			color: textColor,
+		},
+	} );
+	
+	return (
+		<div { ...blockProps }>
+			<RichText.Content tagName="h2" value={ title } />
+			<RichText.Content tagName="p" value={ content } />
+		</div>
+	);
+}
+```
+
+### Dynamic Block with PHP Rendering
+
+```php
+<?php
+/**
+ * Register a dynamic block.
+ */
+function prefix_register_dynamic_block() {
+	register_block_type(
+		__DIR__ . '/build/dynamic-block',
+		array(
+			'render_callback' => 'prefix_render_dynamic_block',
+		)
+	);
+}
+add_action( 'init', 'prefix_register_dynamic_block' );
+
+/**
+ * Server-side rendering for the dynamic block.
+ *
+ * @param array    $attributes Block attributes.
+ * @param string   $content    Block content.
+ * @param WP_Block $block      Block instance.
+ * @return string  Block output.
+ */
+function prefix_render_dynamic_block( $attributes, $content, $block ) {
+	$title = isset( $attributes['title'] ) ? $attributes['title'] : '';
+	$post_id = isset( $attributes['postId'] ) ? absint( $attributes['postId'] ) : 0;
+	
+	$style = '';
+	if ( isset( $attributes['backgroundColor'] ) ) {
+		$style .= 'background-color: ' . esc_attr( $attributes['backgroundColor'] ) . ';';
+	}
+	if ( isset( $attributes['textColor'] ) ) {
+		$style .= 'color: ' . esc_attr( $attributes['textColor'] ) . ';';
+	}
+	
+	$post_content = '';
+	if ( $post_id ) {
+		$post = get_post( $post_id );
+		if ( $post ) {
+			$post_content = wp_kses_post( get_the_excerpt( $post ) );
+		}
+	}
+	
+	$wrapper_attributes = get_block_wrapper_attributes( array( 'style' => $style ) );
+	
+	$output = sprintf(
+		'<div %1$s>
+			<h2>%2$s</h2>
+			<div class="dynamic-content">%3$s</div>
+		</div>',
+		$wrapper_attributes,
+		esc_html( $title ),
+		$post_content
+	);
+	
+	return $output;
+}
+```
+
+## Best Practices
+
+1. **Block Development:**
+   - Use block.json for metadata
+   - Follow WordPress coding standards
+   - Implement proper namespacing
+   - Use meaningful block categories
+   - Implement block transforms when appropriate
+
+2. **Accessibility:**
+   - Use semantic HTML elements
+   - Add proper ARIA attributes
+   - Implement keyboard navigation
+   - Ensure proper color contrast
+   - Test with screen readers
+
+3. **Performance:**
+   - Implement code splitting
+   - Optimize asset loading
+   - Use server-side rendering for dynamic content
+   - Implement proper caching strategies
+   - Minimize re-renders
+
+4. **User Experience:**
+   - Create intuitive controls
+   - Implement proper validation
+   - Add helpful tooltips
+   - Design consistent UI patterns
+   - Provide immediate feedback
+
+5. **Block Variations and Patterns:**
+   - Create reusable block patterns
+   - Implement block variations for flexibility
+   - Group related blocks into collections
+   - Document usage examples
+   - Consider different content scenarios
+
+6. **Development Workflow:**
+   - Use @wordpress/scripts for build tools
+   - Implement proper testing
+   - Create documentation
+   - Follow semantic versioning
+   - Set up continuous integration

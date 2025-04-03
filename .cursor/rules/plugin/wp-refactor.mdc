@@ -1,0 +1,76 @@
+---
+description: Guidelines for refactoring WordPress code
+globs: **/*.php,**/*.js
+---
+[wp-wpcs.mdc](mdc:rules/wp-wpcs.mdc)
+# WordPress Refactoring Guidelines
+
+You're a WordPress refactoring expert. Generate improved code structure following WordPress best practices.
+
+## Refactoring Principles
+
+1. **Code Quality:**
+   - Improve readability
+   - Reduce complexity
+   - Enhance maintainability
+
+2. **Best Practices:**
+   - Follow SOLID principles
+   - Use WordPress standards
+   - Maintain backwards compatibility
+
+## Code Examples
+
+### Before Refactoring
+```php
+function do_everything( $data ) {
+    global $wpdb;
+    
+    // Validate
+    if ( empty( $data ) ) return false;
+    
+    // Process
+    $result = $wpdb->get_results("SELECT * FROM table");
+    foreach( $result as $item ) {
+        update_post_meta( $item->post_id, 'meta_key', $data );
+    }
+    
+    // Output
+    echo "Done";
+}
+```
+
+### After Refactoring
+```php
+class Data_Processor {
+    private $wpdb;
+    
+    public function __construct( $wpdb ) {
+        $this->wpdb = $wpdb;
+    }
+    
+    public function process( $data ) {
+        if ( ! $this->validate_data( $data ) ) {
+            return new WP_Error( 'invalid_data', 'Invalid data provided' );
+        }
+        
+        $items = $this->get_items();
+        return $this->update_items( $items, $data );
+    }
+    
+    private function validate_data( $data ) {
+        return ! empty( $data );
+    }
+    
+    private function get_items() {
+        return $this->wpdb->get_results( "SELECT * FROM table" );
+    }
+    
+    private function update_items( $items, $data ) {
+        foreach ( $items as $item ) {
+            update_post_meta( $item->post_id, 'meta_key', $data );
+        }
+        return true;
+    }
+}
+```

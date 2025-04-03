@@ -1,0 +1,177 @@
+---
+description: Guidelines for classic theme development in WordPress
+globs: **/*.php,**/*.scss,**/*.css,**/template-parts/**
+alwaysApply: false
+---
+# WordPress Classic Theme Development Guidelines
+
+You're a WordPress classic theme development expert. Generate high-quality code that follows WordPress theme best practices for non-FSE themes.
+
+## General Guidelines
+
+1. **Theme Structure:**
+   - Follow WordPress template hierarchy
+   - Use template parts for reusable components
+   - Implement proper functions.php organization
+   - Reference [wp-wpcs.mdc](wp-wpcs.mdc) for coding standards
+
+2. **Template Files:**
+   - Create proper template files (index.php, single.php, etc.)
+   - Use get_template_part() for modularity
+   - Implement proper hooks
+   - Follow WordPress loop patterns
+
+3. **Asset Management:**
+   - Properly enqueue styles and scripts
+   - Use theme supports
+   - Implement responsive design
+   - Optimize for performance
+
+## Code Examples
+
+### Template Structure
+```php
+<?php
+/**
+ * The main template file
+ *
+ * @package ThemeName
+ */
+
+get_header();
+?>
+
+<main id="primary" class="site-main">
+    <?php
+    if ( have_posts() ) :
+        while ( have_posts() ) :
+            the_post();
+            get_template_part( 'template-parts/content', get_post_type() );
+        endwhile;
+
+        the_posts_navigation();
+    else :
+        get_template_part( 'template-parts/content', 'none' );
+    endif;
+    ?>
+</main>
+
+<?php
+get_sidebar();
+get_footer();
+```
+
+### Functions.php Organization
+```php
+<?php
+/**
+ * Theme functions and definitions
+ *
+ * @package ThemeName
+ */
+
+// Theme setup
+require get_template_directory() . '/inc/theme-setup.php';
+
+// Enqueue scripts and styles
+require get_template_directory() . '/inc/enqueue.php';
+
+// Custom template tags
+require get_template_directory() . '/inc/template-tags.php';
+
+// Custom functions
+require get_template_directory() . '/inc/template-functions.php';
+
+// ACF integration
+require get_template_directory() . '/inc/acf-integration.php';
+
+// Polylang integration
+if ( function_exists( 'pll_current_language' ) ) {
+    require get_template_directory() . '/inc/polylang-integration.php';
+}
+
+// WPGridBuilder integration
+if ( class_exists( 'WP_Grid_Builder' ) ) {
+    require get_template_directory() . '/inc/wpgb-integration.php';
+}
+```
+
+### Theme Setup
+```php
+/**
+ * Sets up theme defaults and registers support for various WordPress features.
+ */
+function theme_setup() {
+    // Add default posts and comments RSS feed links to head
+    add_theme_support( 'automatic-feed-links' );
+
+    // Let WordPress manage the document title
+    add_theme_support( 'title-tag' );
+
+    // Enable support for Post Thumbnails
+    add_theme_support( 'post-thumbnails' );
+
+    // Register navigation menus
+    register_nav_menus(
+        array(
+            'primary' => esc_html__( 'Primary Menu', 'theme' ),
+            'footer'  => esc_html__( 'Footer Menu', 'theme' ),
+        )
+    );
+
+    // Switch default core markup to output valid HTML5
+    add_theme_support(
+        'html5',
+        array(
+            'search-form',
+            'comment-form',
+            'comment-list',
+            'gallery',
+            'caption',
+            'style',
+            'script',
+        )
+    );
+
+    // Add theme support for selective refresh for widgets
+    add_theme_support( 'customize-selective-refresh-widgets' );
+
+    // Add support for editor styles
+    add_theme_support( 'editor-styles' );
+
+    // Add support for responsive embeds
+    add_theme_support( 'responsive-embeds' );
+}
+add_action( 'after_setup_theme', 'theme_setup' );
+```
+
+### Enqueue Scripts and Styles
+```php
+/**
+ * Enqueue scripts and styles.
+ */
+function theme_scripts() {
+    // Enqueue main stylesheet
+    wp_enqueue_style(
+        'theme-style',
+        get_stylesheet_uri(),
+        array(),
+        wp_get_theme()->get( 'Version' )
+    );
+
+    // Enqueue main script
+    wp_enqueue_script(
+        'theme-script',
+        get_template_directory_uri() . '/js/main.js',
+        array( 'jquery' ),
+        wp_get_theme()->get( 'Version' ),
+        true
+    );
+
+    // Conditionally load scripts
+    if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
+        wp_enqueue_script( 'comment-reply' );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'theme_scripts' );
+```

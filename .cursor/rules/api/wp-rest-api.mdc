@@ -1,0 +1,211 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+ # WordPress REST API Development Guidelines
+
+You're a WordPress REST API expert. Your tasks include implementing and working with the WordPress REST API, ensuring best practices are followed.
+
+## Core Principles
+
+1. **RESTful Design:**
+   - Use appropriate HTTP methods (GET, POST, PUT, DELETE)
+   - Design intuitive and consistent endpoints
+   - Implement proper response codes
+
+2. **Authentication:**
+   - Use WordPress authentication methods
+   - Implement nonce verification for logged-in users
+   - Consider OAuth if needed for third-party access
+
+3. **Permissions:**
+   - Check capabilities with appropriate permission callbacks
+   - Validate user access at both endpoint registration and callback
+   - Use granular permission checks
+
+4. **Data Structure:**
+   - Sanitize all input data
+   - Define clear schema for request/response
+   - Follow WordPress data formatting conventions
+
+## Implementation Examples
+
+### Registering Custom Endpoints
+
+```php
+/**
+ * Register custom REST API endpoints.
+ */
+function prefix_register_rest_routes() {
+	register_rest_route(
+		'my-namespace/v1',
+		'/items',
+		array(
+			'methods'             => WP_REST_Server::READABLE,
+			'callback'            => 'prefix_get_items',
+			'permission_callback' => 'prefix_get_items_permissions_check',
+			'args'                => prefix_get_items_args(),
+		)
+	);
+}
+add_action( 'rest_api_init', 'prefix_register_rest_routes' );
+
+/**
+ * Check if a user has permission to access the endpoint.
+ *
+ * @param WP_REST_Request $request The request object.
+ * @return true|WP_Error True if user has permission, WP_Error otherwise.
+ */
+function prefix_get_items_permissions_check( $request ) {
+	if ( ! current_user_can( 'read' ) ) {
+		return new WP_Error(
+			'rest_forbidden',
+			esc_html__( 'You cannot view these items.', 'my-text-domain' ),
+			array( 'status' => 403 )
+		);
+	}
+	return true;
+}
+
+/**
+ * Get the query arguments for the items request.
+ *
+ * @return array The prepared arguments.
+ */
+function prefix_get_items_args() {
+	return array(
+		'page'     => array(
+			'description'       => esc_html__( 'Current page of the collection.', 'my-text-domain' ),
+			'type'              => 'integer',
+			'default'           => 1,
+			'sanitize_callback' => 'absint',
+		),
+		'per_page' => array(
+			'description'       => esc_html__( 'Maximum number of items to be returned in result set.', 'my-text-domain' ),
+			'type'              => 'integer',
+			'default'           => 10,
+			'sanitize_callback' => 'absint',
+		),
+	);
+}
+
+/**
+ * Get items handler.
+ *
+ * @param WP_REST_Request $request The request object.
+ * @return WP_REST_Response The response.
+ */
+function prefix_get_items( $request ) {
+	// Sanitize and get parameters
+	$page     = $request->get_param( 'page' );
+	$per_page = $request->get_param( 'per_page' );
+	
+	// Query logic here
+	$items = array(); // Query your items
+	
+	// Return the response
+	return rest_ensure_response( $items );
+}
+```
+
+### Custom Post Type REST API Integration
+
+```php
+/**
+ * Register a custom post type with REST API support.
+ */
+function prefix_register_post_type() {
+	$args = array(
+		'public'       => true,
+		'label'        => 'Products',
+		'show_in_rest' => true,
+		'rest_base'    => 'products',
+		'rest_controller_class' => 'WP_REST_Posts_Controller',
+		'supports'     => array( 'title', 'editor', 'thumbnail', 'custom-fields' ),
+	);
+	register_post_type( 'product', $args );
+}
+add_action( 'init', 'prefix_register_post_type' );
+
+/**
+ * Add custom fields to REST API response.
+ */
+function prefix_register_rest_fields() {
+	register_rest_field(
+		'product',
+		'product_price',
+		array(
+			'get_callback'    => 'prefix_get_product_price',
+			'update_callback' => 'prefix_update_product_price',
+			'schema'          => array(
+				'description' => esc_html__( 'Product price', 'my-text-domain' ),
+				'type'        => 'number',
+			),
+		)
+	);
+}
+add_action( 'rest_api_init', 'prefix_register_rest_fields' );
+
+/**
+ * Get callback for product price field.
+ *
+ * @param array           $object     The object from the response.
+ * @param string          $field_name Name of field.
+ * @param WP_REST_Request $request    Current request.
+ *
+ * @return mixed The field value.
+ */
+function prefix_get_product_price( $object, $field_name, $request ) {
+	return get_post_meta( $object['id'], '_product_price', true );
+}
+
+/**
+ * Update callback for product price field.
+ *
+ * @param mixed           $value      The value to write.
+ * @param WP_Post         $object     The object from the response.
+ * @param string          $field_name Name of field.
+ *
+ * @return bool|WP_Error True on success, WP_Error on failure.
+ */
+function prefix_update_product_price( $value, $object, $field_name ) {
+	if ( ! current_user_can( 'edit_post', $object->ID ) ) {
+		return new WP_Error(
+			'rest_cannot_update',
+			esc_html__( 'Sorry, you are not allowed to update this post.', 'my-text-domain' ),
+			array( 'status' => rest_authorization_required_code() )
+		);
+	}
+
+	return update_post_meta( $object->ID, '_product_price', (float) $value );
+}
+```
+
+## Best Practices
+
+1. **Versioning:**
+   - Always version your API
+   - Use namespaces to avoid conflicts
+   - Plan for backward compatibility
+
+2. **Documentation:**
+   - Document all endpoints
+   - Include examples
+   - Describe parameters and responses
+
+3. **Performance:**
+   - Cache responses when appropriate
+   - Limit fields returned with _fields parameter
+   - Implement pagination for large collections
+
+4. **Security:**
+   - Validate and sanitize all inputs
+   - Use nonces for form submissions
+   - Apply proper capability checks
+   - Consider rate limiting for public endpoints
+
+5. **Testing:**
+   - Write unit tests for endpoints
+   - Test edge cases
+   - Verify error handling

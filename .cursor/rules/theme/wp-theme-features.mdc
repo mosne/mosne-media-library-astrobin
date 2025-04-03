@@ -1,0 +1,724 @@
+---
+description: Guidelines for WordPress theme features registration
+globs: **/*.php,functions.php
+alwaysApply: false
+---
+# WordPress Theme Features Registration Guidelines
+
+You're a WordPress theme features expert. Generate code that properly implements WordPress theme features following best practices.
+
+## General Guidelines
+
+1. **Core Features Registration:**
+   - Register appropriate theme support features
+   - Implement features in the correct hook
+   - Follow WordPress coding standards
+   - Document feature dependencies
+   - Consider performance implications
+
+2. **Custom Features:**
+   - Create modular feature implementations
+   - Use appropriate hooks and filters
+   - Follow proper naming conventions
+   - Document feature usage
+   - Consider backward compatibility
+
+3. **Navigation Menus:**
+   - Register menu locations properly
+   - Implement accessible navigation
+   - Consider mobile navigation
+   - Document menu locations
+   - Provide fallback options
+
+4. **Sidebar Registration:**
+   - Register sidebars with appropriate parameters
+   - Implement responsive sidebar behavior
+   - Consider widget compatibility
+   - Document sidebar purposes
+   - Provide fallback content
+
+## Code Examples
+
+### Basic Theme Features Registration
+```php
+<?php
+/**
+ * Register theme features
+ *
+ * @package Theme_Name
+ */
+
+/**
+ * Sets up theme defaults and registers support for various WordPress features.
+ *
+ * @since 1.0.0
+ */
+function theme_name_setup() {
+    /*
+     * Make theme available for translation.
+     * Translations can be filed in the /languages/ directory.
+     */
+    load_theme_textdomain( 'theme-name', get_template_directory() . '/languages' );
+
+    // Add default posts and comments RSS feed links to head.
+    add_theme_support( 'automatic-feed-links' );
+
+    /*
+     * Let WordPress manage the document title.
+     * By adding theme support, we declare that this theme does not use a
+     * hard-coded <title> tag in the document head, and expect WordPress to
+     * provide it for us.
+     */
+    add_theme_support( 'title-tag' );
+
+    /*
+     * Enable support for Post Thumbnails on posts and pages.
+     *
+     * @link https://developer.wordpress.org/themes/functionality/featured-images-post-thumbnails/
+     */
+    add_theme_support( 'post-thumbnails' );
+
+    // Set default Post Thumbnail size.
+    set_post_thumbnail_size( 1200, 9999 );
+
+    // Add custom image sizes.
+    add_image_size( 'theme-name-featured', 1600, 900, true );
+    add_image_size( 'theme-name-thumbnail', 600, 450, true );
+
+    // This theme uses wp_nav_menu() in multiple locations.
+    register_nav_menus(
+        array(
+            'primary'  => esc_html__( 'Primary Menu', 'theme-name' ),
+            'footer'   => esc_html__( 'Footer Menu', 'theme-name' ),
+            'social'   => esc_html__( 'Social Links Menu', 'theme-name' ),
+            'mobile'   => esc_html__( 'Mobile Menu', 'theme-name' ),
+        )
+    );
+
+    /*
+     * Switch default core markup for search form, comment form, and comments
+     * to output valid HTML5.
+     */
+    add_theme_support(
+        'html5',
+        array(
+            'search-form',
+            'comment-form',
+            'comment-list',
+            'gallery',
+            'caption',
+            'style',
+            'script',
+        )
+    );
+
+    // Set up the WordPress core custom background feature.
+    add_theme_support(
+        'custom-background',
+        apply_filters(
+            'theme_name_custom_background_args',
+            array(
+                'default-color' => 'ffffff',
+                'default-image' => '',
+            )
+        )
+    );
+
+    // Add theme support for selective refresh for widgets.
+    add_theme_support( 'customize-selective-refresh-widgets' );
+
+    /**
+     * Add support for core custom logo.
+     *
+     * @link https://codex.wordpress.org/Theme_Logo
+     */
+    add_theme_support(
+        'custom-logo',
+        array(
+            'height'      => 250,
+            'width'       => 250,
+            'flex-width'  => true,
+            'flex-height' => true,
+        )
+    );
+
+    // Add support for editor styles.
+    add_theme_support( 'editor-styles' );
+
+    // Enqueue editor styles.
+    add_editor_style( 'assets/css/editor-style.css' );
+
+    // Add support for responsive embeds.
+    add_theme_support( 'responsive-embeds' );
+
+    // Add support for full and wide align images.
+    add_theme_support( 'align-wide' );
+
+    // Add support for custom color scheme.
+    add_theme_support(
+        'editor-color-palette',
+        array(
+            array(
+                'name'  => esc_html__( 'Primary', 'theme-name' ),
+                'slug'  => 'primary',
+                'color' => '#0073aa',
+            ),
+            array(
+                'name'  => esc_html__( 'Secondary', 'theme-name' ),
+                'slug'  => 'secondary',
+                'color' => '#23282d',
+            ),
+            array(
+                'name'  => esc_html__( 'Accent', 'theme-name' ),
+                'slug'  => 'accent',
+                'color' => '#00a0d2',
+            ),
+            array(
+                'name'  => esc_html__( 'Highlight', 'theme-name' ),
+                'slug'  => 'highlight',
+                'color' => '#f1c40f',
+            ),
+            array(
+                'name'  => esc_html__( 'White', 'theme-name' ),
+                'slug'  => 'white',
+                'color' => '#ffffff',
+            ),
+            array(
+                'name'  => esc_html__( 'Light Gray', 'theme-name' ),
+                'slug'  => 'light-gray',
+                'color' => '#f5f5f5',
+            ),
+            array(
+                'name'  => esc_html__( 'Medium Gray', 'theme-name' ),
+                'slug'  => 'medium-gray',
+                'color' => '#999999',
+            ),
+            array(
+                'name'  => esc_html__( 'Dark Gray', 'theme-name' ),
+                'slug'  => 'dark-gray',
+                'color' => '#333333',
+            ),
+        )
+    );
+
+    // Add support for custom font sizes.
+    add_theme_support(
+        'editor-font-sizes',
+        array(
+            array(
+                'name'      => esc_html__( 'Small', 'theme-name' ),
+                'shortName' => esc_html__( 'S', 'theme-name' ),
+                'size'      => 14,
+                'slug'      => 'small',
+            ),
+            array(
+                'name'      => esc_html__( 'Normal', 'theme-name' ),
+                'shortName' => esc_html__( 'M', 'theme-name' ),
+                'size'      => 16,
+                'slug'      => 'normal',
+            ),
+            array(
+                'name'      => esc_html__( 'Large', 'theme-name' ),
+                'shortName' => esc_html__( 'L', 'theme-name' ),
+                'size'      => 24,
+                'slug'      => 'large',
+            ),
+            array(
+                'name'      => esc_html__( 'Huge', 'theme-name' ),
+                'shortName' => esc_html__( 'XL', 'theme-name' ),
+                'size'      => 36,
+                'slug'      => 'huge',
+            ),
+        )
+    );
+
+    // Add support for custom line height.
+    add_theme_support( 'custom-line-height' );
+
+    // Add support for custom spacing.
+    add_theme_support( 'custom-spacing' );
+
+    // Add support for custom units.
+    add_theme_support( 'custom-units' );
+}
+add_action( 'after_setup_theme', 'theme_name_setup' );
+```
+
+### Sidebar Registration
+```php
+<?php
+/**
+ * Register widget areas.
+ *
+ * @package Theme_Name
+ */
+
+/**
+ * Register widget area.
+ *
+ * @link https://developer.wordpress.org/themes/functionality/sidebars/#registering-a-sidebar
+ */
+function theme_name_widgets_init() {
+    // Main Sidebar
+    register_sidebar(
+        array(
+            'name'          => esc_html__( 'Sidebar', 'theme-name' ),
+            'id'            => 'sidebar-1',
+            'description'   => esc_html__( 'Add widgets here to appear in your sidebar.', 'theme-name' ),
+            'before_widget' => '<section id="%1$s" class="widget %2$s">',
+            'after_widget'  => '</section>',
+            'before_title'  => '<h2 class="widget-title">',
+            'after_title'   => '</h2>',
+        )
+    );
+
+    // Footer Widget Areas
+    for ( $i = 1; $i <= 4; $i++ ) {
+        register_sidebar(
+            array(
+                'name'          => sprintf( esc_html__( 'Footer %d', 'theme-name' ), $i ),
+                'id'            => 'footer-' . $i,
+                'description'   => sprintf( esc_html__( 'Add widgets here to appear in footer column %d.', 'theme-name' ), $i ),
+                'before_widget' => '<div id="%1$s" class="widget %2$s">',
+                'after_widget'  => '</div>',
+                'before_title'  => '<h3 class="widget-title">',
+                'after_title'   => '</h3>',
+            )
+        );
+    }
+
+    // Shop Sidebar
+    register_sidebar(
+        array(
+            'name'          => esc_html__( 'Shop Sidebar', 'theme-name' ),
+            'id'            => 'shop-sidebar',
+            'description'   => esc_html__( 'Add widgets here to appear in your shop sidebar.', 'theme-name' ),
+            'before_widget' => '<section id="%1$s" class="widget %2$s">',
+            'after_widget'  => '</section>',
+            'before_title'  => '<h2 class="widget-title">',
+            'after_title'   => '</h2>',
+        )
+    );
+
+    // Header Widget Area
+    register_sidebar(
+        array(
+            'name'          => esc_html__( 'Header Widget Area', 'theme-name' ),
+            'id'            => 'header-widget',
+            'description'   => esc_html__( 'Add widgets here to appear in your header.', 'theme-name' ),
+            'before_widget' => '<div id="%1$s" class="header-widget %2$s">',
+            'after_widget'  => '</div>',
+            'before_title'  => '<h3 class="widget-title screen-reader-text">',
+            'after_title'   => '</h3>',
+        )
+    );
+}
+add_action( 'widgets_init', 'theme_name_widgets_init' );
+```
+
+### Custom Header Implementation
+```php
+<?php
+/**
+ * Custom Header implementation
+ *
+ * @package Theme_Name
+ */
+
+/**
+ * Set up the WordPress core custom header feature.
+ *
+ * @uses theme_name_header_style()
+ */
+function theme_name_custom_header_setup() {
+    add_theme_support(
+        'custom-header',
+        apply_filters(
+            'theme_name_custom_header_args',
+            array(
+                'default-image'      => get_template_directory_uri() . '/assets/images/header.jpg',
+                'default-text-color' => '000000',
+                'width'              => 1600,
+                'height'             => 500,
+                'flex-height'        => true,
+                'flex-width'         => true,
+                'wp-head-callback'   => 'theme_name_header_style',
+                'video'              => true,
+            )
+        )
+    );
+
+    // Register default headers.
+    register_default_headers(
+        array(
+            'default-image' => array(
+                'url'           => get_template_directory_uri() . '/assets/images/header.jpg',
+                'thumbnail_url' => get_template_directory_uri() . '/assets/images/header-thumbnail.jpg',
+                'description'   => esc_html__( 'Default Header Image', 'theme-name' ),
+            ),
+            'mountains' => array(
+                'url'           => get_template_directory_uri() . '/assets/images/mountains.jpg',
+                'thumbnail_url' => get_template_directory_uri() . '/assets/images/mountains-thumbnail.jpg',
+                'description'   => esc_html__( 'Mountains', 'theme-name' ),
+            ),
+            'cityscape' => array(
+                'url'           => get_template_directory_uri() . '/assets/images/cityscape.jpg',
+                'thumbnail_url' => get_template_directory_uri() . '/assets/images/cityscape-thumbnail.jpg',
+                'description'   => esc_html__( 'Cityscape', 'theme-name' ),
+            ),
+        )
+    );
+}
+add_action( 'after_setup_theme', 'theme_name_custom_header_setup' );
+
+/**
+ * Styles the header image and text displayed on the blog.
+ *
+ * @see theme_name_custom_header_setup().
+ */
+function theme_name_header_style() {
+    $header_text_color = get_header_textcolor();
+
+    /*
+     * If no custom options for text are set, let's bail.
+     * get_header_textcolor() options: Any hex value, 'blank' to hide text. Default: add_theme_support( 'custom-header' ).
+     */
+    if ( get_theme_support( 'custom-header', 'default-text-color' ) === $header_text_color ) {
+        return;
+    }
+
+    // If we get this far, we have custom styles. Let's do this.
+    ?>
+    <style type="text/css">
+    <?php
+    // Has the text been hidden?
+    if ( ! display_header_text() ) :
+        ?>
+        .site-title,
+        .site-description {
+            position: absolute;
+            clip: rect(1px, 1px, 1px, 1px);
+        }
+        <?php
+        // If the user has set a custom color for the text use that.
+    else :
+        ?>
+        .site-title a,
+        .site-description {
+            color: #<?php echo esc_attr( $header_text_color ); ?>;
+        }
+        <?php endif; ?>
+    </style>
+    <?php
+}
+```
+
+### Custom Navigation Walker
+```php
+<?php
+/**
+ * Custom navigation walker
+ *
+ * @package Theme_Name
+ */
+
+/**
+ * Custom navigation walker class.
+ */
+class Theme_Name_Walker_Nav_Menu extends Walker_Nav_Menu {
+
+    /**
+     * Starts the element output.
+     *
+     * @since 1.0.0
+     *
+     * @see Walker::start_el()
+     *
+     * @param string   $output Used to append additional content (passed by reference).
+     * @param WP_Post  $item   Menu item data object.
+     * @param int      $depth  Depth of menu item. Used for padding.
+     * @param stdClass $args   An object of wp_nav_menu() arguments.
+     * @param int      $id     Current item ID.
+     */
+    public function start_el( &$output, $item, $depth = 0, $args = null, $id = 0 ) {
+        if ( isset( $args->item_spacing ) && 'discard' === $args->item_spacing ) {
+            $t = '';
+            $n = '';
+        } else {
+            $t = "\t";
+            $n = "\n";
+        }
+        $indent = ( $depth ) ? str_repeat( $t, $depth ) : '';
+
+        $classes   = empty( $item->classes ) ? array() : (array) $item->classes;
+        $classes[] = 'menu-item-' . $item->ID;
+
+        // Add class for menu items with children.
+        if ( in_array( 'menu-item-has-children', $classes, true ) ) {
+            $classes[] = 'has-dropdown';
+        }
+
+        /**
+         * Filters the arguments for a single nav menu item.
+         *
+         * @since 4.4.0
+         *
+         * @param stdClass $args  An object of wp_nav_menu() arguments.
+         * @param WP_Post  $item  Menu item data object.
+         * @param int      $depth Depth of menu item. Used for padding.
+         */
+        $args = apply_filters( 'nav_menu_item_args', $args, $item, $depth );
+
+        /**
+         * Filters the CSS classes applied to a menu item's list item element.
+         *
+         * @since 3.0.0
+         * @since 4.1.0 The `$depth` parameter was added.
+         *
+         * @param string[] $classes Array of the CSS classes that are applied to the menu item's `<li>` element.
+         * @param WP_Post  $item    The current menu item.
+         * @param stdClass $args    An object of wp_nav_menu() arguments.
+         * @param int      $depth   Depth of menu item. Used for padding.
+         */
+        $class_names = implode( ' ', apply_filters( 'nav_menu_css_class', array_filter( $classes ), $item, $args, $depth ) );
+        $class_names = $class_names ? ' class="' . esc_attr( $class_names ) . '"' : '';
+
+        /**
+         * Filters the ID applied to a menu item's list item element.
+         *
+         * @since 3.0.1
+         * @since 4.1.0 The `$depth` parameter was added.
+         *
+         * @param string   $menu_id The ID that is applied to the menu item's `<li>` element.
+         * @param WP_Post  $item    The current menu item.
+         * @param stdClass $args    An object of wp_nav_menu() arguments.
+         * @param int      $depth   Depth of menu item. Used for padding.
+         */
+        $id = apply_filters( 'nav_menu_item_id', 'menu-item-' . $item->ID, $item, $args, $depth );
+        $id = $id ? ' id="' . esc_attr( $id ) . '"' : '';
+
+        $output .= $indent . '<li' . $id . $class_names . '>';
+
+        $atts           = array();
+        $atts['title']  = ! empty( $item->attr_title ) ? $item->attr_title : '';
+        $atts['target'] = ! empty( $item->target ) ? $item->target : '';
+        if ( '_blank' === $item->target && empty( $item->xfn ) ) {
+            $atts['rel'] = 'noopener noreferrer';
+        } else {
+            $atts['rel'] = $item->xfn;
+        }
+        $atts['href']         = ! empty( $item->url ) ? $item->url : '';
+        $atts['aria-current'] = $item->current ? 'page' : '';
+
+        /**
+         * Filters the HTML attributes applied to a menu item's anchor element.
+         *
+         * @since 3.6.0
+         * @since 4.1.0 The `$depth` parameter was added.
+         *
+         * @param array $atts {
+         *     The HTML attributes applied to the menu item's `<a>` element, empty strings are ignored.
+         *
+         *     @type string $title        Title attribute.
+         *     @type string $target       Target attribute.
+         *     @type string $rel          The rel attribute.
+         *     @type string $href         The href attribute.
+         *     @type string $aria-current The aria-current attribute.
+         * }
+         * @param WP_Post  $item  The current menu item.
+         * @param stdClass $args  An object of wp_nav_menu() arguments.
+         * @param int      $depth Depth of menu item. Used for padding.
+         */
+        $atts = apply_filters( 'nav_menu_link_attributes', $atts, $item, $args, $depth );
+
+        $attributes = '';
+        foreach ( $atts as $attr => $value ) {
+            if ( is_scalar( $value ) && '' !== $value && false !== $value ) {
+                $value       = ( 'href' === $attr ) ? esc_url( $value ) : esc_attr( $value );
+                $attributes .= ' ' . $attr . '="' . $value . '"';
+            }
+        }
+
+        /** This filter is documented in wp-includes/post-template.php */
+        $title = apply_filters( 'the_title', $item->title, $item->ID );
+
+        /**
+         * Filters a menu item's title.
+         *
+         * @since 4.4.0
+         *
+         * @param string   $title The menu item's title.
+         * @param WP_Post  $item  The current menu item.
+         * @param stdClass $args  An object of wp_nav_menu() arguments.
+         * @param int      $depth Depth of menu item. Used for padding.
+         */
+        $title = apply_filters( 'nav_menu_item_title', $title, $item, $args, $depth );
+
+        $item_output  = $args->before;
+        $item_output .= '<a' . $attributes . '>';
+        $item_output .= $args->link_before . $title . $args->link_after;
+        $item_output .= '</a>';
+
+        // Add dropdown toggle button for items with children.
+        if ( in_array( 'menu-item-has-children', $classes, true ) ) {
+            $item_output .= '<button class="dropdown-toggle" aria-expanded="false">';
+            $item_output .= '<span class="screen-reader-text">' . esc_html__( 'Expand child menu', 'theme-name' ) . '</span>';
+            $item_output .= '<span class="dropdown-icon" aria-hidden="true"></span>';
+            $item_output .= '</button>';
+        }
+
+        $item_output .= $args->after;
+
+        /**
+         * Filters a menu item's starting output.
+         *
+         * The menu item's starting output only includes `$args->before`, the opening `<a>`,
+         * the menu item's title, the closing `</a>`, and `$args->after`. Currently, there is
+         * no filter for modifying the opening and closing `<li>` for a menu item.
+         *
+         * @since 3.0.0
+         *
+         * @param string   $item_output The menu item's starting HTML output.
+         * @param WP_Post  $item        Menu item data object.
+         * @param int      $depth       Depth of menu item. Used for padding.
+         * @param stdClass $args        An object of wp_nav_menu() arguments.
+         */
+        $output .= apply_filters( 'walker_nav_menu_start_el', $item_output, $item, $depth, $args );
+    }
+}
+```
+
+### Theme Features Implementation in functions.php
+```php
+<?php
+/**
+ * Theme functions and definitions
+ *
+ * @link https://developer.wordpress.org/themes/basics/theme-functions/
+ *
+ * @package Theme_Name
+ */
+
+if ( ! defined( 'THEME_NAME_VERSION' ) ) {
+    // Replace the version number of the theme on each release.
+    define( 'THEME_NAME_VERSION', '1.0.0' );
+}
+
+/**
+ * Sets up theme defaults and registers support for various WordPress features.
+ */
+require get_template_directory() . '/inc/theme-setup.php';
+
+/**
+ * Register widget area.
+ */
+require get_template_directory() . '/inc/widgets.php';
+
+/**
+ * Custom header implementation.
+ */
+require get_template_directory() . '/inc/custom-header.php';
+
+/**
+ * Custom template tags for this theme.
+ */
+require get_template_directory() . '/inc/template-tags.php';
+
+/**
+ * Functions which enhance the theme by hooking into WordPress.
+ */
+require get_template_directory() . '/inc/template-functions.php';
+
+/**
+ * Customizer additions.
+ */
+require get_template_directory() . '/inc/customizer.php';
+
+/**
+ * Custom navigation walker.
+ */
+require get_template_directory() . '/inc/class-theme-name-walker-nav-menu.php';
+
+/**
+ * Load Jetpack compatibility file.
+ */
+if ( defined( 'JETPACK__VERSION' ) ) {
+    require get_template_directory() . '/inc/jetpack.php';
+}
+
+/**
+ * Load WooCommerce compatibility file.
+ */
+if ( class_exists( 'WooCommerce' ) ) {
+    require get_template_directory() . '/inc/woocommerce.php';
+}
+
+/**
+ * Enqueue scripts and styles.
+ */
+function theme_name_scripts() {
+    // Enqueue Google Fonts
+    wp_enqueue_style(
+        'theme-name-fonts',
+        'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap',
+        array(),
+        THEME_NAME_VERSION
+    );
+
+    // Enqueue main stylesheet
+    wp_enqueue_style(
+        'theme-name-style',
+        get_stylesheet_uri(),
+        array(),
+        THEME_NAME_VERSION
+    );
+
+    // Enqueue theme stylesheet
+    wp_enqueue_style(
+        'theme-name-main',
+        get_template_directory_uri() . '/assets/css/main.css',
+        array(),
+        THEME_NAME_VERSION
+    );
+
+    // Enqueue theme script
+    wp_enqueue_script(
+        'theme-name-navigation',
+        get_template_directory_uri() . '/assets/js/navigation.js',
+        array(),
+        THEME_NAME_VERSION,
+        true
+    );
+
+    // Enqueue theme main script
+    wp_enqueue_script(
+        'theme-name-main',
+        get_template_directory_uri() . '/assets/js/main.js',
+        array( 'jquery' ),
+        THEME_NAME_VERSION,
+        true
+    );
+
+    if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
+        wp_enqueue_script( 'comment-reply' );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'theme_name_scripts' );
+
+/**
+ * Add custom image sizes to media library dropdown.
+ *
+ * @param array $sizes Image sizes.
+ * @return array Modified image sizes.
+ */
+function theme_name_custom_image_sizes( $sizes ) {
+    return array_merge(
+        $sizes,
+        array(
+            'theme-name-featured'  => esc_html__( 'Featured Image', 'theme-name' ),
+            'theme-name-thumbnail' => esc_html__( 'Custom Thumbnail', 'theme-name' ),
+        )
+    );
+}
+add_filter( 'image_size_names_choose', 'theme_name_custom_image_sizes' );
+```

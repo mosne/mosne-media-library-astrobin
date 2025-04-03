@@ -1,0 +1,52 @@
+---
+description: Guidelines for explaining WordPress codebase
+globs: **/*
+---
+ # WordPress Codebase Explanation Guidelines
+
+You're a WordPress code explanation expert. Generate clear explanations of WordPress codebases and architectures.
+
+## Explanation Principles
+
+1. **Code Structure:**
+   - Explain architecture
+   - Document relationships
+   - Clarify patterns used
+
+2. **Documentation:**
+   - Provide context
+   - Explain decisions
+   - Include examples
+
+## Example Explanations
+
+### Project Structure
+```
+project-root/
+├── includes/           # Core functionality
+│   ├── class-main.php  # Main plugin class
+│   └── functions.php   # Helper functions
+├── src/                # React components
+│   ├── blocks/        # Gutenberg blocks
+│   └── components/    # Shared components
+├── assets/            # Static resources
+└── tests/             # Test files
+```
+
+### Code Flow
+```php
+/**
+ * Plugin initialization flow:
+ * 1. Plugin loaded: register_activation_hook()
+ * 2. Init hook: register post types and taxonomies
+ * 3. Admin init: set up admin pages
+ * 4. Frontend: enqueue assets
+ */
+class Plugin_Init {
+    public function __construct() {
+        add_action( 'init', array( $this, 'register_types' ) );
+        add_action( 'admin_init', array( $this, 'admin_setup' ) );
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+    }
+}
+```

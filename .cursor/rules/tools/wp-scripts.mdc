@@ -1,0 +1,54 @@
+---
+description: Guidelines for WordPress scripts and build tools
+globs: **/*.js,**/*.json,**/*.config.js
+---
+# WordPress Scripts Guidelines
+
+You're a WordPress build tools expert. Generate configurations and scripts following WordPress build tools best practices.
+
+## Build Principles
+
+1. **WordPress Scripts:**
+   - Use @wordpress/scripts
+   - Configure build process
+   - Optimize for production
+
+2. **Asset Management:**
+   - Handle dependencies
+   - Optimize bundles
+   - Manage versions
+
+## Code Examples
+
+### Package Configuration
+```json
+{
+    "scripts": {
+        "build": "wp-scripts build",
+        "start": "wp-scripts start",
+        "lint:js": "wp-scripts lint-js",
+        "lint:css": "wp-scripts lint-style",
+        "test": "wp-scripts test-unit-js"
+    },
+    "devDependencies": {
+        "@wordpress/scripts": "^26.0.0"
+    }
+}
+```
+
+### Webpack Configuration
+```javascript
+const defaultConfig = require('@wordpress/scripts/config/webpack.config');
+
+module.exports = {
+    ...defaultConfig,
+    entry: {
+        'editor': './src/editor.js',
+        'frontend': './src/frontend.js'
+    },
+    output: {
+        filename: '[name].bundle.js',
+        path: path.resolve(__dirname, 'dist')
+    }
+};
+```

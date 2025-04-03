@@ -1,0 +1,455 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+ # JavaScript in WordPress Development Guidelines
+
+You're a WordPress JavaScript expert. You develop JavaScript for WordPress themes and plugins following best practices.
+
+## Core Principles
+
+1. **Script Registration:**
+   - Register and enqueue scripts properly
+   - Use dependencies correctly
+   - Add version numbers for cache busting
+   - Implement conditional loading
+
+2. **WordPress Interoperability:**
+   - Use wp_localize_script for data passing
+   - Implement AJAX correctly
+   - Namespace your JavaScript
+   - Avoid global variables and conflicts
+
+3. **Modern JavaScript:**
+   - Use ES6+ features appropriately
+   - Implement proper module structure
+   - Use build tools for compilation
+   - Follow JavaScript best practices
+
+4. **Performance:**
+   - Optimize script loading
+   - Implement code splitting
+   - Use async/defer when appropriate
+   - Minimize DOM manipulations
+
+## Implementation Examples
+
+### Script Registration
+
+```php
+/**
+ * Enqueue scripts and styles.
+ */
+function prefix_enqueue_scripts() {
+	// Enqueue custom script
+	wp_enqueue_script(
+		'prefix-custom-script',
+		get_theme_file_uri( '/assets/js/custom-script.js' ),
+		array( 'jquery' ),
+		filemtime( get_theme_file_path( '/assets/js/custom-script.js' ) ),
+		true
+	);
+	
+	// Localize script data
+	wp_localize_script(
+		'prefix-custom-script',
+		'prefixData',
+		array(
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'nonce'   => wp_create_nonce( 'prefix_ajax_nonce' ),
+			'siteUrl' => site_url(),
+		)
+	);
+	
+	// Conditionally load script
+	if ( is_singular( 'post' ) ) {
+		wp_enqueue_script(
+			'prefix-post-script',
+			get_theme_file_uri( '/assets/js/post-script.js' ),
+			array( 'prefix-custom-script' ),
+			filemtime( get_theme_file_path( '/assets/js/post-script.js' ) ),
+			true
+		);
+	}
+}
+add_action( 'wp_enqueue_scripts', 'prefix_enqueue_scripts' );
+```
+
+### Modern JavaScript Module
+
+```js
+/**
+ * Main module for handling interactions.
+ * 
+ * @package prefix
+ */
+
+/**
+ * Import dependencies
+ */
+import { debounce } from './utils/helpers';
+
+/**
+ * Class to handle toggle functionality.
+ */
+class ToggleHandler {
+	/**
+	 * Constructor.
+	 * 
+	 * @param {Object} options Configuration options.
+	 */
+	constructor(options = {}) {
+		this.toggleSelector = options.toggleSelector || '.toggle-btn';
+		this.targetSelector = options.targetSelector || '.toggle-content';
+		this.activeClass = options.activeClass || 'is-active';
+		
+		this.init();
+	}
+	
+	/**
+	 * Initialize the toggle handler.
+	 */
+	init() {
+		const toggleBtns = document.querySelectorAll(this.toggleSelector);
+		
+		if (!toggleBtns.length) {
+			return;
+		}
+		
+		toggleBtns.forEach(btn => {
+			btn.addEventListener('click', this.handleToggle.bind(this));
+		});
+		
+		// Close on ESC key
+		document.addEventListener('keydown', event => {
+			if (event.key === 'Escape') {
+				this.closeAll();
+			}
+		});
+	}
+	
+	/**
+	 * Handle toggle click event.
+	 * 
+	 * @param {Event} event Click event.
+	 */
+	handleToggle(event) {
+		event.preventDefault();
+		
+		const btn = event.currentTarget;
+		const targetId = btn.getAttribute('data-target');
+		const target = document.getElementById(targetId);
+		
+		if (!target) {
+			return;
+		}
+		
+		const isActive = target.classList.contains(this.activeClass);
+		
+		// Toggle active state
+		if (isActive) {
+			this.close(btn, target);
+		} else {
+			this.open(btn, target);
+		}
+	}
+	
+	/**
+	 * Open toggle content.
+	 * 
+	 * @param {Element} btn    Toggle button.
+	 * @param {Element} target Target content element.
+	 */
+	open(btn, target) {
+		btn.setAttribute('aria-expanded', 'true');
+		target.classList.add(this.activeClass);
+		target.setAttribute('aria-hidden', 'false');
+		
+		// Trigger custom event
+		const event = new CustomEvent('toggle:opened', {
+			detail: { button: btn, target: target }
+		});
+		document.dispatchEvent(event);
+	}
+	
+	/**
+	 * Close toggle content.
+	 * 
+	 * @param {Element} btn    Toggle button.
+	 * @param {Element} target Target content element.
+	 */
+	close(btn, target) {
+		btn.setAttribute('aria-expanded', 'false');
+		target.classList.remove(this.activeClass);
+		target.setAttribute('aria-hidden', 'true');
+		
+		// Trigger custom event
+		const event = new CustomEvent('toggle:closed', {
+			detail: { button: btn, target: target }
+		});
+		document.dispatchEvent(event);
+	}
+	
+	/**
+	 * Close all toggle elements.
+	 */
+	closeAll() {
+		const activeBtns = document.querySelectorAll(`${this.toggleSelector}[aria-expanded="true"]`);
+		const activeTargets = document.querySelectorAll(`${this.targetSelector}.${this.activeClass}`);
+		
+		activeBtns.forEach(btn => {
+			btn.setAttribute('aria-expanded', 'false');
+		});
+		
+		activeTargets.forEach(target => {
+			target.classList.remove(this.activeClass);
+			target.setAttribute('aria-hidden', 'true');
+		});
+	}
+}
+
+/**
+ * Initialize components when DOM is ready.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+	// Initialize toggle handler
+	const toggle = new ToggleHandler({
+		toggleSelector: '.js-toggle',
+		targetSelector: '.js-toggle-content',
+		activeClass: 'is-visible'
+	});
+	
+	// Initialize other components
+	// ...
+});
+```
+
+### AJAX Implementation
+
+```js
+/**
+ * AJAX handler for WordPress.
+ */
+const AjaxHandler = {
+	/**
+	 * Initialize AJAX functionality.
+	 */
+	init() {
+		this.setupEventListeners();
+	},
+	
+	/**
+	 * Set up event listeners.
+	 */
+	setupEventListeners() {
+		const loadMoreBtn = document.querySelector('.js-load-more');
+		
+		if (loadMoreBtn) {
+			loadMoreBtn.addEventListener('click', this.handleLoadMore.bind(this));
+		}
+		
+		const filterForm = document.querySelector('.js-filter-form');
+		
+		if (filterForm) {
+			filterForm.addEventListener('submit', this.handleFilter.bind(this));
+		}
+	},
+	
+	/**
+	 * Handle load more button click.
+	 * 
+	 * @param {Event} event Click event.
+	 */
+	handleLoadMore(event) {
+		event.preventDefault();
+		
+		const button = event.currentTarget;
+		const container = document.querySelector('.js-posts-container');
+		
+		if (!container) {
+			return;
+		}
+		
+		// Show loading state
+		button.classList.add('is-loading');
+		button.disabled = true;
+		
+		const page = parseInt(button.dataset.page, 10) || 1;
+		const nextPage = page + 1;
+		
+		// Make AJAX request
+		this.makeRequest({
+			action: 'load_more_posts',
+			nonce: prefixData.nonce,
+			page: nextPage
+		})
+			.then(response => {
+				if (response.success && response.data.html) {
+					// Append new content
+					container.insertAdjacentHTML('beforeend', response.data.html);
+					
+					// Update button page number
+					button.dataset.page = nextPage;
+					
+					// Hide button if no more posts
+					if (response.data.hasMore === false) {
+						button.style.display = 'none';
+					}
+				} else {
+					console.error('Error loading posts:', response.data.message);
+				}
+			})
+			.catch(error => {
+				console.error('AJAX error:', error);
+			})
+			.finally(() => {
+				// Reset loading state
+				button.classList.remove('is-loading');
+				button.disabled = false;
+			});
+	},
+	
+	/**
+	 * Handle form filter submit.
+	 * 
+	 * @param {Event} event Submit event.
+	 */
+	handleFilter(event) {
+		event.preventDefault();
+		
+		const form = event.currentTarget;
+		const container = document.querySelector('.js-filter-results');
+		const loadingEl = document.querySelector('.js-loading-indicator');
+		
+		if (!container) {
+			return;
+		}
+		
+		// Show loading state
+		if (loadingEl) {
+			loadingEl.classList.add('is-active');
+		}
+		
+		// Get form data
+		const formData = new FormData(form);
+		formData.append('action', 'filter_posts');
+		formData.append('nonce', prefixData.nonce);
+		
+		// Make AJAX request
+		this.makeRequest(formData)
+			.then(response => {
+				if (response.success) {
+					// Update container with new content
+					container.innerHTML = response.data.html;
+					
+					// Update URL with filters
+					if (history.pushState) {
+						const url = new URL(window.location);
+						
+						// Add form params to URL
+						for (const [key, value] of formData.entries()) {
+							if (key !== 'action' && key !== 'nonce') {
+								url.searchParams.set(key, value);
+							}
+						}
+						
+						history.pushState({}, '', url);
+					}
+				} else {
+					console.error('Filter error:', response.data.message);
+				}
+			})
+			.catch(error => {
+				console.error('AJAX error:', error);
+			})
+			.finally(() => {
+				// Hide loading indicator
+				if (loadingEl) {
+					loadingEl.classList.remove('is-active');
+				}
+			});
+	},
+	
+	/**
+	 * Make a request to the WordPress AJAX endpoint.
+	 * 
+	 * @param {Object|FormData} data Request data.
+	 * @return {Promise}        Request promise.
+	 */
+	makeRequest(data) {
+		let ajaxOptions = {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'Cache-Control': 'no-cache'
+			}
+		};
+		
+		// Handle FormData or object
+		if (data instanceof FormData) {
+			ajaxOptions.body = data;
+		} else {
+			ajaxOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+			ajaxOptions.body = new URLSearchParams(data).toString();
+		}
+		
+		return fetch(prefixData.ajaxUrl, ajaxOptions)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+				return response.json();
+			});
+	}
+};
+
+// Initialize AJAX handler
+document.addEventListener('DOMContentLoaded', () => {
+	AjaxHandler.init();
+});
+```
+
+## Best Practices
+
+1. **Script Loading:**
+   - Enqueue scripts in the footer when possible
+   - Use proper dependencies
+   - Implement conditional loading
+   - Consider using async/defer attributes
+
+2. **Code Organization:**
+   - Use modular JavaScript
+   - Implement namespacing
+   - Create reusable components
+   - Document public APIs
+
+3. **Compatibility:**
+   - Use feature detection, not browser detection
+   - Polyfill missing features when needed
+   - Provide fallbacks for older browsers
+   - Test across multiple browsers
+
+4. **Performance:**
+   - Minimize DOM manipulations
+   - Optimize event handlers
+   - Use debouncing/throttling for expensive operations
+   - Avoid jQuery when vanilla JS is sufficient
+
+5. **Accessibility:**
+   - Support keyboard navigation
+   - Implement proper ARIA attributes
+   - Provide focus management
+   - Test with screen readers
+
+6. **Security:**
+   - Sanitize data on the server side
+   - Validate nonces for AJAX requests
+   - Escape output in JavaScript templates
+   - Implement proper authentication checks
+
+7. **Development Workflow:**
+   - Use ESLint for code quality
+   - Implement proper error handling
+   - Use source maps for debugging
+   - Create comprehensive documentation

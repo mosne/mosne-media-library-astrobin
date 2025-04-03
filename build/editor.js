@@ -93,7 +93,8 @@ __webpack_require__.r(__webpack_exports__);
 if (typeof wp !== "undefined") {
   // Helper functions to reduce duplication
   const createAstrobinCaption = (result, formattedDate = null) => {
-    const baseCaption = `<a href="https://app.astrobin.com/i/${result.hash}" target="_blank" rel="nofollow">${result.title}</a> ${(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("by", "mosne-astrobin")} <a href="https://app.astrobin.com/u/${result.user}" target="_blank" rel="nofollow">${result.user}</a>`;
+    const baseCaption = `<a href="https://app.astrobin.com/i/${result.hash}" target="_blank" rel="nofollow noreferrer">${result.title}</a> ${(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("by", "mosne-astrobin")} <a href="https://app.astrobin.com/u/${result.user}" target="_blank" rel="nofollow noreferrer">${result.user}</a> &copy; <a href="${result.license_url}" target="_blank" rel="nofollow noreferrer">${result.license_name}</a>
+    `;
     if (formattedDate) {
       return `${baseCaption}<br/><em>${(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)("Image of the Day:", "mosne-astrobin")} ${formattedDate}</em>`;
     }
@@ -126,7 +127,7 @@ if (typeof wp !== "undefined") {
   const fetchAstrobinImages = async (query = {}, type, searchParam = "term") => {
     try {
       const defaultArgs = {
-        limit: 50,
+        limit: 30,
         type: type
       };
       const finalQuery = {

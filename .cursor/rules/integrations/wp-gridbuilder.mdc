@@ -1,0 +1,221 @@
+---
+description: Guidelines for WPGridBuilder integration in WordPress
+globs: **/*.php,**/*.js,**/*.scss
+alwaysApply: false
+---
+# WordPress WPGridBuilder Integration Guidelines
+
+You're a WordPress WPGridBuilder integration expert. Generate high-quality code that follows best practices for implementing WPGridBuilder in WordPress projects.
+
+## General Guidelines
+
+1. **Grid Configuration:**
+   - Create reusable grid configurations
+   - Implement proper card templates
+   - Use facets effectively
+   - Optimize for performance
+
+2. **Custom Cards:**
+   - Create modular card templates
+   - Follow naming conventions
+   - Implement proper hooks
+   - Optimize for performance
+
+3. **Custom Facets:**
+   - Register custom facets when needed
+   - Implement proper filtering logic
+   - Handle edge cases
+   - Document facet usage
+
+## Code Examples
+
+### Grid Registration
+```php
+/**
+ * Register a custom grid
+ */
+function prefix_register_custom_grid() {
+    if (!class_exists('WP_Grid_Builder')) {
+        return;
+    }
+
+    // Register grid
+    wp_grid_builder_register_grid([
+        'name'        => 'Custom Posts Grid',
+        'slug'        => 'custom-posts-grid',
+        'post_type'   => ['post'],
+        'card'        => 'custom-card',
+        'layout'      => 'masonry',
+        'columns'     => 3,
+        'rows'        => 3,
+        'gap'         => 24,
+        'orderby'     => 'date',
+        'order'       => 'DESC',
+        'facets'      => ['search', 'category-filter'],
+    ]);
+}
+add_action('init', 'prefix_register_custom_grid');
+```
+
+### Custom Card Template
+```php
+/**
+ * Register custom card
+ */
+function prefix_register_custom_card($cards) {
+    $cards['custom-card'] = [
+        'name'     => 'Custom Card',
+        'template' => get_template_directory() . '/wpgb/cards/custom-card.php',
+    ];
+    return $cards;
+}
+add_filter('wp_grid_builder/cards', 'prefix_register_custom_card');
+```
+
+### Custom Card Template File (custom-card.php)
+```php
+<?php
+/**
+ * Custom card template
+ *
+ * @package ThemeName
+ */
+
+// Exit if accessed directly.
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Get post data
+$post_id = wpgb_get_post_id();
+$permalink = wpgb_get_the_permalink();
+$title = wpgb_get_the_title();
+$excerpt = wpgb_get_the_excerpt(['length' => 20]);
+$thumbnail = wpgb_get_the_post_thumbnail(['size' => 'medium_large']);
+
+// Get custom field data if using ACF
+$subtitle = '';
+if (function_exists('get_field')) {
+    $subtitle = get_field('subtitle', $post_id);
+}
+?>
+
+<div class="wpgb-card-wrapper">
+    <div class="wpgb-card">
+        <?php if ($thumbnail) : ?>
+            <div class="wpgb-card-media-container">
+                <a href="<?php echo esc_url($permalink); ?>" class="wpgb-card-media-link">
+                    <?php echo wp_kses_post($thumbnail); ?>
+                </a>
+            </div>
+        <?php endif; ?>
+        
+        <div class="wpgb-card-content">
+            <h3 class="wpgb-card-title">
+                <a href="<?php echo esc_url($permalink); ?>">
+                    <?php echo esc_html($title); ?>
+                </a>
+            </h3>
+            
+            <?php if ($subtitle) : ?>
+                <div class="wpgb-card-subtitle">
+                    <?php echo esc_html($subtitle); ?>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($excerpt) : ?>
+                <div class="wpgb-card-excerpt">
+                    <?php echo wp_kses_post($excerpt); ?>
+                </div>
+            <?php endif; ?>
+            
+            <div class="wpgb-card-footer">
+                <a href="<?php echo esc_url($permalink); ?>" class="wpgb-card-button">
+                    <?php esc_html_e('Read More', 'theme'); ?>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+### Custom Facet Registration
+```php
+/**
+ * Register custom facet
+ */
+function prefix_register_custom_facet($facets) {
+    $facets['custom-facet'] = [
+        'name'        => 'Custom Facet',
+        'description' => 'A custom facet for filtering content',
+        'icon'        => 'dashicons-filter',
+        'class'       => 'Prefix_Custom_Facet',
+    ];
+    return $facets;
+}
+add_filter('wp_grid_builder/facets', 'prefix_register_custom_facet');
+
+/**
+ * Custom facet class
+ */
+class Prefix_Custom_Facet extends \WP_Grid_Builder\FrontEnd\Facets\Facet {
+    /**
+     * Render facet
+     *
+     * @param array $facet Holds facet settings.
+     * @return string Facet markup.
+     */
+    public function render($facet) {
+        // Facet implementation
+        $output = '<div class="wpgb-custom-facet">';
+        // Facet content
+        $output .= '</div>';
+        
+        return $output;
+    }
+    
+    /**
+     * Query facet
+     *
+     * @param array $facet Holds facet settings.
+     * @return array Holds query arguments.
+     */
+    public function query($facet) {
+        // Query implementation
+        return [];
+    }
+}
+```
+
+### Grid Shortcode Usage
+```php
+/**
+ * Display grid with custom attributes
+ */
+function prefix_display_custom_grid($atts) {
+    if (!class_exists('WP_Grid_Builder')) {
+        return '';
+    }
+    
+    $atts = shortcode_atts([
+        'id' => 'custom-posts-grid',
+        'post_type' => 'post',
+        'category' => '',
+    ], $atts);
+    
+    $args = [];
+    
+    if (!empty($atts['category'])) {
+        $args['tax_query'] = [
+            [
+                'taxonomy' => 'category',
+                'field' => 'slug',
+                'terms' => explode(',', $atts['category']),
+            ],
+        ];
+    }
+    
+    return do_shortcode('[wpgb_grid id="' . esc_attr($atts['id']) . '" query="' . esc_attr(json_encode($args)) . '"]');
+}
+add_shortcode('custom_grid', 'prefix_display_custom_grid');
+```

@@ -1,0 +1,57 @@
+---
+description: Performance optimization guidelines for WordPress
+globs: **/*.php,**/*.js,**/*.scss
+---
+# WordPress Performance Guidelines
+
+You're a WordPress performance optimization expert. Generate efficient code that follows WordPress VIP performance best practices.
+
+## Performance Principles
+
+1. **Database Optimization:**
+   - Use proper indexing
+   - Optimize queries
+   - Implement caching strategies
+
+2. **Asset Management:**
+   - Minimize and combine assets
+   - Use async/defer for scripts
+   - Implement proper asset versioning
+
+## Code Examples
+
+### Query Optimization
+```php
+// Use specific fields instead of SELECT *
+$posts = $wpdb->get_results( $wpdb->prepare(
+    "SELECT ID, post_title FROM $wpdb->posts WHERE post_type = %s AND post_status = %s",
+    'post',
+    'publish'
+) );
+
+// Use proper caching
+$cache_key = 'my_cached_data_' . $user_id;
+$data = wp_cache_get( $cache_key );
+if ( false === $data ) {
+    $data = expensive_function();
+    wp_cache_set( $cache_key, $data, '', HOUR_IN_SECONDS );
+}
+```
+
+### Asset Loading
+```php
+function prefix_optimize_assets() {
+    wp_enqueue_script(
+        'my-script',
+        get_template_directory_uri() . '/assets/js/script.min.js',
+        array(),
+        THEME_VERSION,
+        true // Load in footer
+    );
+
+    // Conditionally load assets
+    if ( is_single() ) {
+        wp_enqueue_style( 'single-post-style' );
+    }
+}
+```

@@ -1,0 +1,63 @@
+---
+description: Guidelines for React development in WordPress
+globs: **/*.js,**/*.jsx,**/*.tsx
+alwaysApply: false
+---
+# WordPress React Development Guidelines
+
+You're a WordPress React expert. Generate React components and functionality following WordPress Gutenberg patterns.
+
+## React Principles
+
+1. **Component Structure:**
+   - Follow Gutenberg patterns
+   - Use functional components
+   - Implement WordPress hooks
+
+2. **State Management:**
+   - Use WordPress data store
+   - Implement proper data flows
+   - Handle side effects
+
+## Code Examples
+
+### Basic Block Component
+```jsx
+import { useBlockProps } from '@wordpress/block-editor';
+import { useState } from '@wordpress/element';
+
+const Edit = ({ attributes, setAttributes }) => {
+    const blockProps = useBlockProps();
+    const [localState, setLocalState] = useState('');
+
+    return (
+        <div {...blockProps}>
+            <input
+                value={attributes.content}
+                onChange={(e) => 
+                    setAttributes({ content: e.target.value })
+                }
+            />
+        </div>
+    );
+};
+
+export default Edit;
+```
+
+### Data Store Integration
+```javascript
+import { useSelect, useDispatch } from '@wordpress/data';
+
+function MyComponent() {
+    const posts = useSelect((select) => 
+        select('core').getEntityRecords('postType', 'post')
+    );
+    
+    const { editPost } = useDispatch('core');
+
+    return (
+        // Component implementation
+    );
+}
+```

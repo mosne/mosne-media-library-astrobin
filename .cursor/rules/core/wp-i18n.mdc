@@ -1,0 +1,405 @@
+---
+description: Guidelines for WordPress internationalization and localization
+globs: "**/*.php,**/*.js"
+---
+
+# WordPress Internationalization and Localization Guidelines
+
+You're a WordPress internationalization expert. Generate code that properly implements WordPress i18n and l10n features following best practices.
+
+## General Guidelines
+
+1. **Text Domain Usage:**
+   - Use consistent text domain across the project
+   - Register text domain properly
+   - Load text domain at the appropriate hook
+   - Use text domain in all translatable strings
+   - Follow naming conventions for text domains
+
+2. **Translation Functions:**
+   - Use appropriate translation functions
+   - Include context when necessary
+   - Handle plurals correctly
+   - Avoid variable concatenation in translatable strings
+   - Use placeholders for dynamic content
+
+3. **RTL Support:**
+   - Implement proper RTL stylesheets
+   - Use directional properties correctly
+   - Test layouts in RTL mode
+   - Consider text expansion in designs
+   - Use appropriate RTL functions and hooks
+
+4. **Date and Number Formatting:**
+   - Use WordPress date/time formatting functions
+   - Implement proper number formatting
+   - Consider locale-specific formats
+   - Use appropriate timezone handling
+   - Format currencies according to locale
+
+## Code Examples
+
+### Text Domain Registration and Loading
+```php
+/**
+ * Load plugin text domain.
+ *
+ * @return void
+ */
+function prefix_load_textdomain() {
+    load_plugin_textdomain(
+        'textdomain',
+        false,
+        dirname( plugin_basename( __FILE__ ) ) . '/languages'
+    );
+}
+add_action( 'plugins_loaded', 'prefix_load_textdomain' );
+
+/**
+ * Load theme text domain.
+ *
+ * @return void
+ */
+function prefix_theme_load_textdomain() {
+    load_theme_textdomain(
+        'textdomain',
+        get_template_directory() . '/languages'
+    );
+}
+add_action( 'after_setup_theme', 'prefix_theme_load_textdomain' );
+```
+
+### Basic Translation Functions
+```php
+// Simple string translation
+$translated_text = __( 'This is a translatable string.', 'textdomain' );
+
+// Echo translated string
+echo esc_html__( 'This is a translatable string that will be echoed.', 'textdomain' );
+
+// With escaping for HTML output
+?>
+<h2><?php echo esc_html__( 'Translatable Heading', 'textdomain' ); ?></h2>
+<p><?php echo esc_html__( 'This is a translatable paragraph.', 'textdomain' ); ?></p>
+<?php
+
+// Translation with context
+$context_text = _x( 'Post', 'noun: a blog post', 'textdomain' );
+echo esc_html_x( 'Post', 'verb: to publish content', 'textdomain' );
+
+// Translating with variables (correct way)
+$count = 5;
+$post_type = 'product';
+printf(
+    /* translators: %1$d: number of items, %2$s: post type name */
+    _n(
+        'Found %1$d %2$s',
+        'Found %1$d %2$s',
+        $count,
+        'textdomain'
+    ),
+    $count,
+    $post_type
+);
+
+// Incorrect way (don't do this)
+// echo __( 'Found ' . $count . ' ' . $post_type, 'textdomain' );
+```
+
+### Advanced Translation Functions
+```php
+/**
+ * Example of plural translations.
+ *
+ * @param int $count The count of items.
+ * @return string Translated string.
+ */
+function prefix_get_item_count_message( $count ) {
+    return sprintf(
+        /* translators: %d: number of items */
+        _n(
+            'You have %d item in your cart.',
+            'You have %d items in your cart.',
+            $count,
+            'textdomain'
+        ),
+        number_format_i18n( $count )
+    );
+}
+
+/**
+ * Example of context-specific translations.
+ *
+ * @param string $context The context for the string.
+ * @return string Translated string.
+ */
+function prefix_get_contextual_message( $context ) {
+    if ( 'checkout' === $context ) {
+        return _x( 'Order', 'checkout button text', 'textdomain' );
+    } elseif ( 'admin' === $context ) {
+        return _x( 'Order', 'admin order list', 'textdomain' );
+    }
+
+    return _x( 'Order', 'general context', 'textdomain' );
+}
+
+/**
+ * Example of handling plurals with context.
+ *
+ * @param int    $count   The count of items.
+ * @param string $context The context for the string.
+ * @return string Translated string.
+ */
+function prefix_get_contextual_count( $count, $context ) {
+    return sprintf(
+        /* translators: %d: number of items */
+        _nx(
+            '%d item was processed.',
+            '%d items were processed.',
+            $count,
+            $context,
+            'textdomain'
+        ),
+        number_format_i18n( $count )
+    );
+}
+
+/**
+ * Example of translating a string with multiple placeholders.
+ *
+ * @param string $username The username.
+ * @param int    $days     Number of days.
+ * @return string Translated string.
+ */
+function prefix_get_welcome_message( $username, $days ) {
+    return sprintf(
+        /* translators: %1$s: username, %2$d: number of days */
+        __( 'Welcome back, %1$s! It has been %2$d days since your last visit.', 'textdomain' ),
+        esc_html( $username ),
+        number_format_i18n( $days )
+    );
+}
+```
+
+### JavaScript Translations
+```php
+/**
+ * Enqueue scripts with translations.
+ *
+ * @return void
+ */
+function prefix_enqueue_scripts() {
+    wp_enqueue_script(
+        'prefix-script',
+        plugin_dir_url( __FILE__ ) . 'js/script.js',
+        array( 'jquery', 'wp-i18n' ),
+        '1.0.0',
+        true
+    );
+
+    if ( function_exists( 'wp_set_script_translations' ) ) {
+        wp_set_script_translations(
+            'prefix-script',
+            'textdomain',
+            plugin_dir_path( __FILE__ ) . 'languages'
+        );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'prefix_enqueue_scripts' );
+```
+
+```javascript
+// JavaScript file (script.js)
+import { __, _n, sprintf } from '@wordpress/i18n';
+
+// Simple translation
+const message = __( 'This is a translatable string.', 'textdomain' );
+
+// Translation with placeholders
+const welcomeMessage = sprintf(
+    /* translators: %s: username */
+    __( 'Welcome, %s!', 'textdomain' ),
+    username
+);
+
+// Plural forms
+const itemCount = sprintf(
+    /* translators: %d: number of items */
+    _n(
+        'You have %d item in your cart.',
+        'You have %d items in your cart.',
+        count,
+        'textdomain'
+    ),
+    count
+);
+
+// Display translated strings
+document.getElementById( 'message' ).textContent = message;
+document.getElementById( 'welcome' ).textContent = welcomeMessage;
+document.getElementById( 'cart-count' ).textContent = itemCount;
+```
+
+### RTL Support
+```php
+/**
+ * Enqueue RTL styles.
+ *
+ * @return void
+ */
+function prefix_enqueue_rtl_styles() {
+    wp_enqueue_style(
+        'prefix-style',
+        get_template_directory_uri() . '/style.css',
+        array(),
+        '1.0.0'
+    );
+
+    // Load RTL stylesheet if needed
+    if ( is_rtl() ) {
+        wp_enqueue_style(
+            'prefix-rtl',
+            get_template_directory_uri() . '/rtl.css',
+            array( 'prefix-style' ),
+            '1.0.0'
+        );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'prefix_enqueue_rtl_styles' );
+```
+
+```css
+/* RTL-specific styles (rtl.css) */
+.site-header .menu {
+    float: right;
+}
+
+.entry-content {
+    text-align: right;
+}
+
+.alignleft {
+    float: right;
+    margin-left: 1.5em;
+    margin-right: 0;
+}
+
+.alignright {
+    float: left;
+    margin-right: 1.5em;
+    margin-left: 0;
+}
+
+/* Using logical properties for better RTL support */
+.site-content {
+    padding-inline-start: 2rem;
+    padding-inline-end: 1rem;
+    margin-inline-start: auto;
+    margin-inline-end: 0;
+}
+
+/* For older browsers, provide fallbacks */
+.site-content {
+    padding-left: 2rem;
+    padding-right: 1rem;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+[dir="rtl"] .site-content {
+    padding-left: 1rem;
+    padding-right: 2rem;
+    margin-left: 0;
+    margin-right: auto;
+}
+```
+
+### Date and Number Formatting
+```php
+/**
+ * Format date according to locale.
+ *
+ * @param string $date_string Date string in Y-m-d format.
+ * @param string $format      Optional. PHP date format. Default empty (uses WordPress date format).
+ * @return string Formatted date.
+ */
+function prefix_format_date( $date_string, $format = '' ) {
+    // Convert string to timestamp
+    $timestamp = strtotime( $date_string );
+
+    if ( ! $timestamp ) {
+        return '';
+    }
+
+    // Use WordPress date_i18n function for localized date
+    if ( empty( $format ) ) {
+        // Use the date format from WordPress settings
+        $format = get_option( 'date_format' );
+    }
+
+    return date_i18n( $format, $timestamp );
+}
+
+/**
+ * Format number according to locale.
+ *
+ * @param float  $number   The number to format.
+ * @param int    $decimals Optional. Number of decimal points. Default 0.
+ * @return string Formatted number.
+ */
+function prefix_format_number( $number, $decimals = 0 ) {
+    return number_format_i18n( $number, $decimals );
+}
+
+/**
+ * Format currency according to locale.
+ *
+ * @param float  $amount   The amount to format.
+ * @param string $currency Optional. Currency code. Default empty (uses site currency).
+ * @return string Formatted currency.
+ */
+function prefix_format_currency( $amount, $currency = '' ) {
+    if ( function_exists( 'wc_price' ) && class_exists( 'WooCommerce' ) ) {
+        // Use WooCommerce's currency formatting if available
+        return wc_price( $amount, array( 'currency' => $currency ) );
+    }
+
+    // Basic currency formatting
+    if ( empty( $currency ) ) {
+        $currency = 'USD'; // Default currency
+    }
+
+    $formatted = number_format_i18n( $amount, 2 );
+
+    switch ( $currency ) {
+        case 'USD':
+            return '$' . $formatted;
+        case 'EUR':
+            return '€' . $formatted;
+        case 'GBP':
+            return '£' . $formatted;
+        default:
+            return $formatted . ' ' . $currency;
+    }
+}
+
+/**
+ * Example usage of formatting functions.
+ */
+function prefix_display_formatted_data() {
+    // Date formatting
+    $date = '2023-04-15';
+    echo esc_html( prefix_format_date( $date ) ) . '<br>';
+    echo esc_html( prefix_format_date( $date, 'F j, Y' ) ) . '<br>';
+
+    // Number formatting
+    $number = 1234567.89;
+    echo esc_html( prefix_format_number( $number ) ) . '<br>';
+    echo esc_html( prefix_format_number( $number, 2 ) ) . '<br>';
+
+    // Currency formatting
+    $amount = 49.99;
+    echo wp_kses_post( prefix_format_currency( $amount ) ) . '<br>';
+    echo wp_kses_post( prefix_format_currency( $amount, 'EUR' ) ) . '<br>';
+}
+```

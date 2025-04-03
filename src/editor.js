@@ -5,12 +5,13 @@ if (typeof wp !== "undefined") {
   const createAstrobinCaption = (result, formattedDate = null) => {
     const baseCaption = `<a href="https://app.astrobin.com/i/${
       result.hash
-    }" target="_blank" rel="nofollow">${result.title}</a> ${__(
+    }" target="_blank" rel="nofollow noreferrer">${result.title}</a> ${__(
       "by",
       "mosne-astrobin"
     )} <a href="https://app.astrobin.com/u/${
       result.user
-    }" target="_blank" rel="nofollow">${result.user}</a>`;
+    }" target="_blank" rel="nofollow noreferrer">${result.user}</a> &copy; <a href="${result.license_url}" target="_blank" rel="nofollow noreferrer">${result.license_name}</a>
+    `;
 
     if (formattedDate) {
       return `${baseCaption}<br/><em>${__(
@@ -58,7 +59,7 @@ if (typeof wp !== "undefined") {
   ) => {
     try {
       const defaultArgs = {
-        limit: 50,
+        limit: 30,
         type: type,
       };
 
