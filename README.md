@@ -1,5 +1,8 @@
 # Mosne Media Library AstroBin
 
+![osne Media Library AstroBin](https://github.com/mosne/mosne-media-library-astrobin/blob/main/.wordpress-org/banner-1544x500.png)
+
+
 WordPress plugin to integrate AstroBin images into WordPress using the Media Library in the Gutenberg editor. This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.
 
 ## Features
