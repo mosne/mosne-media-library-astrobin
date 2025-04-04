@@ -69,7 +69,7 @@ npm run build
 
 ## API Reference
 
-This plugin uses the AstroBin REST API as documented at [welcome.astrobin.com/application-programming-interface](https://welcome.astrobin.com/application-programming-interface).
+This plugin uses the AstroBin REST API using this [documentation](https://welcome.astrobin.com/application-programming-interface).
 
 The plugin specifically uses these endpoints:
 - `image/` - For browsing and searching images

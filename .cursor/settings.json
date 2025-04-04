@@ -6,9 +6,5 @@
             "autoComplete": true,
             "inlineCompletion": true
         }
-    },
-    "editor": {
-        "formatOnSave": true,
-        "defaultFormatter": "prettier"
     }
 }
