@@ -6,17 +6,48 @@
   "scripts": {
     "build": "wp-scripts build",
     "start": "wp-scripts start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint:css": "wp-scripts lint-style",
+		"lint:js": "wp-scripts lint-js",
+		"packages-update": "wp-scripts packages-update",
+		"plugin-zip": "wp-scripts plugin-zip",
+    "make-pot": "wp i18n make-pot . languages/mosne-text-to-speech-block.pot --slug=mosne-text-to-speech-block --domain=mosne-text-to-speech-block --exclude=node_modules,src",
+		"make-json": "wp i18n make-json languages/ --no-purge",
+		"check": "node check_versions.js"
   },
   "keywords": [
     "wordpress",
     "astrobin",
     "media-library"
   ],
-  "author": "Mosne",
-  "license": "ISC",
+	"files": [
+		"[^.]*",
+		"!.idea",
+    "!.cursor",
+    "!.distignore",
+    "!.gitattributes",
+    "!.gitignore",
+    "!.nvmrc",
+    "!.plugin-data",
+    "!.wp-env.json",
+		"!.vscode",
+		"!.git",
+		"!.yarn",
+		"!yarn.lock",
+		"!readme.md",
+		"!vendor",
+		"!src",
+		"!*.zip",
+		"!check_versions.js",
+		"!*.sql",
+		"!*.gz",
+		"!*.dist",
+		"!package.json",
+		"src"
+	],
+  "author": "The WordPress Contributors",
+	"license": "GPL-2.0-or-later",
   "devDependencies": {
-    "@wordpress/block-editor": "*",
     "@wordpress/i18n": "*",
     "@wordpress/scripts": "*"
   }
