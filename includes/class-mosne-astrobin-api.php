@@ -2,7 +2,7 @@
 /**
  * AstroBin API Integration
  *
- * @package Mosne_Media_Library_AstroBin
+ * @package Mosne_Media_Library_Astronomy
  */
 
 // If this file is called directly, abort.
@@ -19,7 +19,7 @@ class Mosne_AstroBin_API {
 	/**
 	 * AstroBin API base URL
 	 */
-	const API_BASE_URL = 'https://www.astrobin.com/api/v1/';
+	const ASTROBIN_API_BASE_URL = 'https://www.astrobin.com/api/v1/';
 
 	/**
 	 * Initialize the API
@@ -32,13 +32,14 @@ class Mosne_AstroBin_API {
 	 * Register REST API routes
 	 */
 	public static function register_rest_routes() {
+		// AstroBin Search Endpoint
 		register_rest_route(
-			'mosne-astrobin/v1',
-			'/search',
+			'mosne-media-library-astronomy/v1',
+			'/astrobin/search',
 			array(
 				'methods'             => 'GET',
-				'callback'            => array( __CLASS__, 'search_images' ),
-				'permission_callback' => array( __CLASS__, 'api_permissions_check' ),
+				'callback'            => array( __CLASS__, 'search_astrobin_images' ),
+				'permission_callback' => array( 'Mosne_Astronomy_API', 'api_permissions_check' ),
 				'args'                => array(
 					'term'      => array(
 						'required'          => false,
@@ -69,25 +70,15 @@ class Mosne_AstroBin_API {
 	}
 
 	/**
-	 * Check if user has permission to access the API
-	 *
-	 * @return bool
-	 */
-	public static function api_permissions_check() {
-		// Only allow authenticated users with proper capabilities
-		return current_user_can( 'edit_posts' );
-
-		// For development environments, you can use filters to modify this behavior:
-		// return apply_filters( 'mosne_astrobin_api_permission', current_user_can( 'edit_posts' ) );
-	}
-
-	/**
 	 * Search AstroBin images
 	 *
 	 * @param WP_REST_Request $request The request object.
 	 * @return WP_REST_Response
 	 */
-	public static function search_images( $request ) {
+	public static function search_astrobin_images( $request ) {
+		// Debug logging
+		error_log( 'AstroBin search request received: ' . print_r( $request->get_params(), true ) );
+
 		$search_term = $request->get_param( 'term' );
 		$username    = $request->get_param( 'username' );
 		$page_size   = $request->get_param( 'page_size' );
@@ -95,12 +86,14 @@ class Mosne_AstroBin_API {
 		$type        = $request->get_param( 'type' );
 
 		// Get API credentials
-		$credentials = Mosne_AstroBin_Settings::get_api_credentials();
+		$credentials = Mosne_Astronomy_Settings::get_astrobin_credentials();
+		error_log( 'AstroBin credentials: ' . print_r( $credentials, true ) );
 
 		if ( empty( $credentials['api_key'] ) || empty( $credentials['api_secret'] ) ) {
+			error_log( 'AstroBin API credentials missing' );
 			return new WP_REST_Response(
 				array(
-					'error' => __( 'AstroBin API credentials are not configured.', 'mosne-media-library-astrobin' ),
+					'error' => __( 'AstroBin API credentials are not configured.', 'mosne-media-library-astronomy' ),
 				),
 				400
 			);
@@ -115,31 +108,31 @@ class Mosne_AstroBin_API {
 		$endpoint = 'image/';
 
 		switch ( $type ) {
-			case 'my_pictures':
+			case 'astrobin_my_pictures':
 				// Search by current user
 				$params['user'] = $credentials['username'];
 				break;
 
-			case 'user_gallery':
+			case 'astrobin_user_gallery':
 				// Search by specified username
 				if ( ! empty( $username ) ) {
 					$params['user'] = $username;
 				}
 				break;
 
-			case 'imageoftheday':
+			case 'astrobin_imageoftheday':
 				// Image of the Day
 				$endpoint = 'imageoftheday/';
 				break;
 
-			case 'by_subject':
+			case 'astrobin_by_subject':
 				// Search by astronomical subject
 				if ( ! empty( $search_term ) ) {
 					$params['subjects'] = $search_term;
 				}
 				break;
 
-			case 'by_hash':
+			case 'astrobin_by_hash':
 				// Search by image hash
 				if ( ! empty( $search_term ) ) {
 					$endpoint = 'image/' . $search_term . '/';
@@ -148,7 +141,7 @@ class Mosne_AstroBin_API {
 		}
 
 		// Add search term if provided (for endpoints that support it)
-		if ( ! empty( $search_term ) && $endpoint === 'image/' ) {
+		if ( ! empty( $search_term ) && 'image/' === $endpoint ) {
 			$params['title__icontains'] = $search_term;
 		}
 
@@ -159,7 +152,7 @@ class Mosne_AstroBin_API {
 		}
 
 		// Make the API request
-		$api_response = self::make_api_request( $endpoint, $params );
+		$api_response = self::make_astrobin_request( $endpoint, $params );
 
 		if ( is_wp_error( $api_response ) ) {
 			return new WP_REST_Response(
@@ -171,24 +164,24 @@ class Mosne_AstroBin_API {
 		}
 
 		// Process results based on endpoint type
-		if ( $endpoint === 'imageoftheday/' ) {
-			self::process_imageoftheday_results( $api_response, $formatted_results );
-		} elseif ( $type === 'by_hash' && ! empty( $search_term ) ) {
-			self::process_by_hash_results( $api_response, $formatted_results );
+		if ( 'imageoftheday/' === $endpoint ) {
+			self::process_astrobin_imageoftheday_results( $api_response, $formatted_results );
+		} elseif ( 'astrobin_by_hash' === $type && ! empty( $search_term ) ) {
+			self::process_astrobin_by_hash_results( $api_response, $formatted_results );
 		} else {
-			self::process_standard_results( $api_response, $formatted_results );
+			self::process_astrobin_standard_results( $api_response, $formatted_results );
 		}
 
 		return new WP_REST_Response( $formatted_results );
 	}
 
 	/**
-	 * Process Image of the Day results
+	 * Process AstroBin Image of the Day results
 	 *
 	 * @param object $api_response The API response.
 	 * @param array  $formatted_results Results array to populate.
 	 */
-	private static function process_imageoftheday_results( $api_response, &$formatted_results ) {
+	private static function process_astrobin_imageoftheday_results( $api_response, &$formatted_results ) {
 		if ( empty( $api_response->objects ) || ! is_array( $api_response->objects ) ) {
 			return;
 		}
@@ -208,21 +201,21 @@ class Mosne_AstroBin_API {
 			}
 
 			// Get the image details
-			$image_response = self::make_api_request( 'image/' . $image_id . '/', array() );
+			$image_response = self::make_astrobin_request( 'image/' . $image_id . '/', array() );
 
 			if ( ! is_wp_error( $image_response ) && is_object( $image_response ) ) {
-				$formatted_results['objects'][] = self::format_image_data( $image_response, $iotd->date ?? '' );
+				$formatted_results['objects'][] = self::format_astrobin_image_data( $image_response, $iotd->date ?? '' );
 			}
 		}
 	}
 
 	/**
-	 * Process standard image results
+	 * Process AstroBin standard image results
 	 *
 	 * @param object $api_response The API response.
 	 * @param array  $formatted_results Results array to populate.
 	 */
-	private static function process_standard_results( $api_response, &$formatted_results ) {
+	private static function process_astrobin_standard_results( $api_response, &$formatted_results ) {
 		$objects = isset( $api_response->objects ) && is_array( $api_response->objects )
 			? $api_response->objects
 			: array( $api_response );
@@ -233,150 +226,182 @@ class Mosne_AstroBin_API {
 				continue;
 			}
 
-			$formatted_results['objects'][] = self::format_image_data( $image );
+			$formatted_results['objects'][] = self::format_astrobin_image_data( $image );
 		}
 	}
 
 	/**
-	 * Process by hash results
+	 * Process AstroBin by hash results
 	 *
 	 * @param object $api_response The API response.
 	 * @param array  $formatted_results Results array to populate.
 	 */
-	private static function process_by_hash_results( $api_response, &$formatted_results ) {
+	private static function process_astrobin_by_hash_results( $api_response, &$formatted_results ) {
 		if ( empty( $api_response->id ) ) {
 			return;
 		}
 
-		$formatted_results['objects'][] = self::format_image_data( $api_response );
+		$formatted_results['objects'][] = self::format_astrobin_image_data( $api_response );
 	}
 
 	/**
-	 * Format image data for consistent output
+	 * Format AstroBin image data for consistent output
 	 *
-	 * @param object $image The image data.
-	 * @param string $date Optional date for IOTD.
-	 * @return array Formatted image data.
+	 * @param object $image The image data from API.
+	 * @param string $date  Optional date for IOTD.
+	 * @return array
 	 */
-	private static function format_image_data( $image, $date = '' ) {
-		return array(
-			'id'           => $image->id,
-			'title'        => isset( $image->title ) ? $image->title : '',
-			'user'         => isset( $image->user ) ? $image->user : '',
-			'hash'         => isset( $image->hash ) ? $image->hash : '',
-			'date'         => $date,
-			'url_regular'  => isset( $image->url_regular ) ? $image->url_regular : '',
-			'url_thumb'    => isset( $image->url_thumb ) ? $image->url_thumb : '',
-			'url_real'     => isset( $image->url_real ) ? $image->url_real :
-							( isset( $image->url_regular ) ? $image->url_regular : '' ),
-			'url_hd'       => isset( $image->url_hd ) ? $image->url_hd : '',
+	private static function format_astrobin_image_data( $image, $date = '' ) {
+		// Extract username from resource URI
+		$username = '';
+		if ( ! empty( $image->user ) ) {
+			$username_parts = explode( '/', rtrim( $image->user, '/' ) );
+			$username       = end( $username_parts );
+		}
 
-			// add copyright license
-			'license'      => isset( $image->license ) ? $image->license : 0,
-			'license_name' => self::get_license_name( isset( $image->license ) ? $image->license : 0 ),
-			'license_url'  => self::get_license_url( isset( $image->license ) ? $image->license : 0, isset( $image->hash ) ? $image->hash : '' ),
+		// Format data consistently
+		$formatted = array(
+			'id'            => $image->id,
+			'hash'          => $image->hash,
+			'title'         => $image->title ?? __( 'Untitled', 'mosne-media-library-astronomy' ),
+			'description'   => $image->description ?? '',
+			'url'           => 'https://www.astrobin.com/' . $image->hash . '/',
+			'thumbnail_url' => $image->url_regular ?? '',
+			'url_real'      => $image->url_real ?? '',
+			'url_hd'        => $image->url_hd ?? '',
+			'date'          => $image->date ?? '',
+			'source'        => 'astrobin',
+			'username'      => $username ?? '',
+			'license'       => self::get_astrobin_license_name( $image->license ?? null ),
+			'license_url'   => self::get_astrobin_license_url( $image->license ?? null, $image->hash ),
 		);
+
+		// Add IOTD date if available
+		if ( ! empty( $date ) ) {
+			$formatted['iotd_date'] = $date;
+		}
+
+		return $formatted;
 	}
 
 	/**
 	 * Extract image ID from AstroBin path
 	 *
-	 * @param string $image_path The image path.
-	 * @return string|null The extracted image ID or null.
+	 * @param string $image_path Path from API.
+	 * @return string|false
 	 */
 	private static function extract_image_id( $image_path ) {
-		if ( preg_match( '|/api/v1/image/([^/]+)|', $image_path, $matches ) ) {
+		if ( preg_match( '#/(\d+)/$#', $image_path, $matches ) ) {
 			return $matches[1];
 		}
-
-		return basename( rtrim( $image_path, '/' ) );
+		return false;
 	}
 
 	/**
-	 * Make request to AstroBin API
+	 * Make AstroBin API request
 	 *
 	 * @param string $endpoint API endpoint.
 	 * @param array  $params   Request parameters.
-	 * @return mixed|WP_Error
+	 * @return mixed
 	 */
-	private static function make_api_request( $endpoint, $params = array() ) {
-		$credentials = Mosne_AstroBin_Settings::get_api_credentials();
+	private static function make_astrobin_request( $endpoint, $params = array() ) {
+		// Get API credentials
+		$credentials = Mosne_Astronomy_Settings::get_astrobin_credentials();
 
-		// Add authentication params
+		// Add authentication parameters
 		$params['api_key']    = $credentials['api_key'];
 		$params['api_secret'] = $credentials['api_secret'];
 		$params['format']     = 'json';
 
-		$request_url = self::API_BASE_URL . $endpoint . '?' . http_build_query( $params );
+		// Build request URL
+		$url = self::ASTROBIN_API_BASE_URL . $endpoint;
+		if ( ! empty( $params ) ) {
+			$url = add_query_arg( $params, $url );
+		}
 
-		// Remove sensitive data for logging
-		$log_url = preg_replace( '/api_secret=[^&]*/', 'api_secret=REDACTED', $request_url );
+		// Log the request URL (without credentials)
+		$log_url = preg_replace( '/api_key=[^&]+&api_secret=[^&]+/', 'api_key=HIDDEN&api_secret=HIDDEN', $url );
+		error_log( 'AstroBin API request URL: ' . $log_url );
 
+		// Make request
 		$response = wp_remote_get(
-			$request_url,
+			$url,
 			array(
-				'timeout'     => 15,
+				'timeout'     => 30,
+				'redirection' => 5,
 				'httpversion' => '1.1',
+				'user-agent'  => 'MosneMediaLibraryAstronomy/1.0.0',
 				'headers'     => array(
-					'User-Agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . get_bloginfo( 'url' ),
+					'Accept' => 'application/json',
 				),
 			)
 		);
 
+		// Check for errors
 		if ( is_wp_error( $response ) ) {
+			error_log( 'AstroBin API error: ' . $response->get_error_message() );
 			return $response;
 		}
 
+		// Check response code
 		$response_code = wp_remote_retrieve_response_code( $response );
-
 		if ( 200 !== $response_code ) {
+			error_log( 'AstroBin API HTTP error: ' . $response_code . ' - ' . wp_remote_retrieve_body( $response ) );
 			return new WP_Error(
 				'astrobin_api_error',
 				sprintf(
 					/* translators: %d: HTTP response code */
-					__( 'AstroBin API error: %d', 'mosne-media-library-astrobin' ),
+					__( 'AstroBin API request failed with code %d', 'mosne-media-library-astronomy' ),
 					$response_code
 				)
 			);
 		}
 
+		// Parse response
 		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body );
 
-		return json_decode( $body );
+		if ( JSON_ERROR_NONE !== json_last_error() ) {
+			return new WP_Error( 'json_parse_error', __( 'Failed to parse AstroBin API response', 'mosne-media-library-astronomy' ) );
+		}
+
+		return $data;
 	}
 
 	/**
-	 * Map numeric license type to human-readable text
+	 * Get AstroBin license name
 	 *
-	 * @param int $license_type The numeric license type from AstroBin API.
-	 * @return string The human-readable license text.
+	 * @param int|null $license_type License type ID.
+	 * @return string
 	 */
-	public static function get_license_name( $license_type ) {
-		$license_types = array(
-			0 => esc_html__( 'All rights reserved', 'mosne-media-library-astrobin' ),
-			1 => esc_html__( 'Attribution-NonCommercial-ShareAlike Creative Commons', 'mosne-media-library-astrobin' ),
-			2 => esc_html__( 'Attribution-NonCommercial Creative Commons', 'mosne-media-library-astrobin' ),
-			3 => esc_html__( 'Attribution-NonCommercial-NoDerivs Creative Commons', 'mosne-media-library-astrobin' ),
-			4 => esc_html__( 'Attribution Creative Commons', 'mosne-media-library-astrobin' ),
-			5 => esc_html__( 'Attribution-ShareAlike Creative Commons', 'mosne-media-library-astrobin' ),
-			6 => esc_html__( 'Attribution-NoDerivs Creative Commons', 'mosne-media-library-astrobin' ),
+	public static function get_astrobin_license_name( $license_type ) {
+		$licenses = array(
+			0 => __( 'All rights reserved', 'mosne-media-library-astronomy' ),
+			1 => __( 'Attribution-NonCommercial-ShareAlike Creative Commons', 'mosne-media-library-astronomy' ),
+			2 => __( 'Attribution-NonCommercial Creative Commons', 'mosne-media-library-astronomy' ),
+			3 => __( 'Attribution-NonCommercial-NoDerivs Creative Commons', 'mosne-media-library-astronomy' ),
+			4 => __( 'Attribution Creative Commons', 'mosne-media-library-astronomy' ),
+			5 => __( 'Attribution-ShareAlike Creative Commons', 'mosne-media-library-astronomy' ),
+			6 => __( 'Attribution-NoDerivs Creative Commons', 'mosne-media-library-astronomy' ),
 		);
 
-		return isset( $license_types[ $license_type ] )
-			? $license_types[ $license_type ]
-			: __( 'Unknown license', 'mosne-media-library-astrobin' );
+		if ( is_null( $license_type ) || ! isset( $licenses[ $license_type ] ) ) {
+			return __( 'Unknown license', 'mosne-media-library-astronomy' );
+		}
+
+		return $licenses[ $license_type ];
 	}
 
 	/**
-	 * Get license URL based on license type
+	 * Get AstroBin license URL
 	 *
-	 * @param int $license_type The numeric license type from AstroBin API.
-	 * @param string $image_hash The hash of the image.
-	 * @return string The license URL or empty string if proprietary.
+	 * @param int|null $license_type License type ID.
+	 * @param string   $image_hash   Image hash for fallback URL.
+	 * @return string
 	 */
-	public static function get_license_url( $license_type, $image_hash ) {
+	public static function get_astrobin_license_url( $license_type, $image_hash ) {
 		$license_urls = array(
-			0 => 'https://app.astrobin.com/i/' . $image_hash . '/',  // link to astrobin image page
+			0 => '',
 			1 => 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
 			2 => 'https://creativecommons.org/licenses/by-nc/4.0/',
 			3 => 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
@@ -385,6 +410,11 @@ class Mosne_AstroBin_API {
 			6 => 'https://creativecommons.org/licenses/by-nd/4.0/',
 		);
 
-		return isset( $license_urls[ $license_type ] ) ? $license_urls[ $license_type ] : '';
+		if ( is_null( $license_type ) || ! isset( $license_urls[ $license_type ] ) || empty( $license_urls[ $license_type ] ) ) {
+			// Return the image URL if no license URL is available
+			return 'https://www.astrobin.com/' . $image_hash . '/';
+		}
+
+		return $license_urls[ $license_type ];
 	}
 }

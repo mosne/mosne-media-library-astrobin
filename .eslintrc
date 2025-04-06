@@ -29,5 +29,10 @@
 		"ecmaFeatures": {
 			"jsx": true
 		}
+	},
+	"globals": {
+		"wp": true,
+		"wp_rest": true,
+		"mosneAstronomy": false
 	}
 } 
