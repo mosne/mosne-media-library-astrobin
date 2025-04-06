@@ -79,3 +79,4 @@ The plugin specifically uses these endpoints:
 
 This plugin is licensed under the GNU GPL 2.0 licence 
 This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.
+

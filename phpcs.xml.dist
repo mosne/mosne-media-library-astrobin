@@ -6,8 +6,7 @@
 	<description>Coding standard for Mosne plugins</description>
 
     <!-- Scan all files in directory -->
-    <file>mosne-text-to-speech-block.php</file>
-    <file>src/render.php</file>
+    <file>.</file>
 
     <exclude-pattern>./build/</exclude-pattern>
     <exclude-pattern>./node_modules/</exclude-pattern>
