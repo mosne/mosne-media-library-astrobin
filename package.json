@@ -11,7 +11,7 @@
 		"lint:js": "wp-scripts lint-js",
 		"packages-update": "wp-scripts packages-update",
 		"plugin-zip": "wp-scripts plugin-zip",
-    "make-pot": "wp i18n make-pot . languages/mosne-text-to-speech-block.pot --slug=mosne-text-to-speech-block --domain=mosne-text-to-speech-block --exclude=node_modules,src",
+    "make-pot": "wp i18n make-pot . languages/mosne-media-library-astrobin.pot --slug=mosne-media-library-astrobin --domain=mosne-media-library-astrobin --exclude=node_modules,src",
 		"make-json": "wp i18n make-json languages/ --no-purge",
 		"check": "node check_versions.js"
   },

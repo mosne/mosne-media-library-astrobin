@@ -108,7 +108,7 @@ class Mosne_Media_Library_AstroBin {
 	 */
 	public function enqueue_admin_scripts( $hook ) {
 		// Only load scripts in post editor
-		if ( $hook == 'post.php' || $hook == 'post-new.php' || $hook == 'site-editor.php' ) {
+		if ( 'post.php' === $hook || 'post-new.php' === $hook || 'site-editor.php' === $hook ) {
 			$asset_file = include MOSNE_ASTROBIN_PLUGIN_DIR . 'build/editor.asset.php';
 
 			wp_enqueue_script(
@@ -171,10 +171,14 @@ class Mosne_Media_Library_AstroBin {
 			);
 		}
 	}
+
+	/**
+	 * Initialize the plugin
+	 */
+	public static function init() {
+		self::get_instance();
+	}
 }
 
 // Initialize the plugin
-function mosne_media_library_astrobin_init() {
-	Mosne_Media_Library_AstroBin::get_instance();
-}
-add_action( 'plugins_loaded', 'mosne_media_library_astrobin_init' );
+add_action( 'plugins_loaded', array( 'Mosne_Media_Library_AstroBin', 'init' ) );
