@@ -148,7 +148,7 @@ class Mosne_AstroBin_API {
 		}
 
 		// Add search term if provided (for endpoints that support it)
-		if ( ! empty( $search_term ) && $endpoint === 'image/' ) {
+		if ( ! empty( $search_term ) && 'image/' === $endpoint ) {
 			$params['title__icontains'] = $search_term;
 		}
 
@@ -171,9 +171,9 @@ class Mosne_AstroBin_API {
 		}
 
 		// Process results based on endpoint type
-		if ( $endpoint === 'imageoftheday/' ) {
+		if ( 'imageoftheday/' === $endpoint ) {
 			self::process_imageoftheday_results( $api_response, $formatted_results );
-		} elseif ( $type === 'by_hash' && ! empty( $search_term ) ) {
+		} elseif ( 'by_hash' === $type && ! empty( $search_term ) ) {
 			self::process_by_hash_results( $api_response, $formatted_results );
 		} else {
 			self::process_standard_results( $api_response, $formatted_results );

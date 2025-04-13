@@ -9,9 +9,7 @@
 		"node": true
 	},
 	"globals": {
-		"NodeFilter": "readonly",
-		"SpeechSynthesisUtterance": "readonly",
-		"speechSynthesis": "readonly"
+		"mosneAstroBin": "readonly"
 	},
 	"rules": {
 		"no-console": ["error", { "allow": ["warn", "error"] }],

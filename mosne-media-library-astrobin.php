@@ -2,8 +2,11 @@
 /**
  * Plugin Name: Mosne Media Library AstroBin
  * Description: WordPress integration with AstroBin API
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Mosne
+ * Author URI: https://mosne.com
+ * License: GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: mosne-media-library-astrobin
  * Domain Path: /languages
  */
@@ -13,7 +16,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'MOSNE_ASTROBIN_VERSION', '1.0.0' );
+define( 'MOSNE_ASTROBIN_VERSION', '1.0.1' );
 define( 'MOSNE_ASTROBIN_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MOSNE_ASTROBIN_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -105,7 +108,7 @@ class Mosne_Media_Library_AstroBin {
 	 */
 	public function enqueue_admin_scripts( $hook ) {
 		// Only load scripts in post editor
-		if ( $hook == 'post.php' || $hook == 'post-new.php' || $hook == 'site-editor.php' ) {
+		if ( 'post.php' === $hook || 'post-new.php' === $hook || 'site-editor.php' === $hook ) {
 			$asset_file = include MOSNE_ASTROBIN_PLUGIN_DIR . 'build/editor.asset.php';
 
 			wp_enqueue_script(
@@ -168,10 +171,14 @@ class Mosne_Media_Library_AstroBin {
 			);
 		}
 	}
+
+	/**
+	 * Initialize the plugin
+	 */
+	public static function init() {
+		self::get_instance();
+	}
 }
 
 // Initialize the plugin
-function mosne_media_library_astrobin_init() {
-	Mosne_Media_Library_AstroBin::get_instance();
-}
-add_action( 'plugins_loaded', 'mosne_media_library_astrobin_init' );
+add_action( 'plugins_loaded', array( 'Mosne_Media_Library_AstroBin', 'init' ) );
