@@ -130,13 +130,23 @@ class Mosne_Media_Library_Astronomy {
 				true
 			);
 
+			// Check if API credentials are available
+			$astrobin_credentials = Mosne_Astronomy_Settings::get_astrobin_credentials();
+			$nasa_api_key         = Mosne_Astronomy_Settings::get_nasa_api_key();
+
+			// Determine if credentials are properly configured
+			$astrobin_api_enabled = ! empty( $astrobin_credentials['api_key'] ) && ! empty( $astrobin_credentials['api_secret'] );
+			$nasa_api_enabled     = ! empty( $nasa_api_key ) && 'DEMO_KEY' !== $nasa_api_key;
+
 			// Pass data to script
 			wp_localize_script(
 				'mosne-astronomy-editor',
 				'mosneAstronomy',
 				array(
-					'apiUrl' => esc_url_raw( rest_url( 'mosne-media-library-astronomy/v1' ) ),
-					'nonce'  => wp_create_nonce( 'wp_rest' ),
+					'apiUrl'                => esc_url_raw( rest_url( 'mosne-media-library-astronomy/v1' ) ),
+					'nonce'                 => wp_create_nonce( 'wp_rest' ),
+					'astrobinApiKeyEnabled' => $astrobin_api_enabled,
+					'nasaApiKeyEnabled'     => $nasa_api_enabled,
 				)
 			);
 		}
