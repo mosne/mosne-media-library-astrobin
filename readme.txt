@@ -1,6 +1,6 @@
 === Mosne Media Library AstroBin ===
 Contributors:      mosne
-Tags:              media, image, library, astrobin, astronomy, astrophotography
+Tags:              image,library, astrobin, astronomy, astrophotography
 Requires at least: 6.5
 Requires PHP:      7.4
 Tested up to:      6.8
@@ -8,15 +8,16 @@ Stable tag:        1.0.0
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
+WordPress plugin to integrate AstroBin images into WordPress using the Media Library in the Gutenberg editor.
+
+== Description ==
+
 WordPress integration with AstroBin API to browse and insert astronomy images directly from the Gutenberg editor.
 The images will be complete with title, author attribution, copyright information, and links to both the original image and the author's profile.
 This plugin has been created for my astronomy club website to easily retrieve images from AstroBin with all their associated information.
 Since "All rights reserved" is the most commonly used license, I'd like to remind you that this means you need the author's permission before publishing any images on your website.
-
-== Description ==
-
-WordPress plugin to integrate AstroBin images into WordPress using the Media Library in the Gutenberg editor.
 This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.
+
 
 == Key Features ==
 

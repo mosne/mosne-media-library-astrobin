@@ -4,6 +4,9 @@
  * Description: WordPress integration with AstroBin API
  * Version: 1.0.0
  * Author: Mosne
+ * Author URI: https://mosne.com
+ * License: GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: mosne-media-library-astrobin
  * Domain Path: /languages
  */

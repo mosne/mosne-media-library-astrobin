@@ -33,7 +33,9 @@ class Mosne_AstroBin_Settings {
 		register_setting(
 			self::OPTION_GROUP,
 			self::OPTION_NAME,
-			array( 'Mosne_AstroBin_Settings', 'sanitize_settings' )
+			function ( $input ) {
+				return self::sanitize_settings( $input );
+			}
 		);
 
 		add_settings_section(
