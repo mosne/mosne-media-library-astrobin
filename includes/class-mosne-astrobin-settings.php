@@ -90,6 +90,9 @@ class Mosne_AstroBin_Settings {
 			?>
 			</form>
 			<p>
+				<?php echo esc_html__( 'Since "All rights reserved" is the most commonly used license, I\'d like to remind you that this means you need the author\'s permission before publishing any images on your website.', 'mosne-media-library-astrobin' ); ?>
+			</p>
+			<p>
 				<?php echo esc_html__( 'This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.', 'mosne-media-library-astrobin' ); ?>
 			</p>
 		</div>
@@ -131,8 +134,7 @@ class Mosne_AstroBin_Settings {
 	 * API Secret field callback
 	 */
 	public static function api_secret_callback() {
-		$options    = get_option( self::OPTION_NAME );
-		$api_secret = isset( $options['api_secret'] ) ? self::decrypt_data( $options['api_secret'] ) : '';
+		$api_secret = self::get_api_secret();
 
 		echo '<input type="password" id="api_secret" name="' . esc_attr( self::OPTION_NAME ) . '[api_secret]" value="' . esc_attr( $api_secret ) . '" class="regular-text">';
 	}
@@ -155,86 +157,31 @@ class Mosne_AstroBin_Settings {
 		}
 
 		if ( isset( $input['api_secret'] ) ) {
-			// Encrypt sensitive data before saving to database
-			$sanitized_input['api_secret'] = self::encrypt_data( sanitize_text_field( $input['api_secret'] ) );
+			// Save API secret securely
+			$api_secret = sanitize_text_field( $input['api_secret'] );
+
+			// Only update if the value has changed
+			if ( ! empty( $api_secret ) ) {
+				// Store the API secret using WordPress options
+				update_option( 'mosne_astrobin_api_secret', $api_secret, false );
+				// Set a placeholder in the main options
+				$sanitized_input['api_secret'] = 'STORED_SECURELY';
+			} else {
+				// Keep the placeholder if empty (to prevent clearing on empty submissions)
+				$sanitized_input['api_secret'] = 'STORED_SECURELY';
+			}
 		}
 
 		return $sanitized_input;
 	}
 
 	/**
-	 * Encrypt data for secure storage
-	 *
-	 * @param string $data Data to encrypt.
-	 * @return string
-	 */
-	private static function encrypt_data( $data ) {
-		// Skip encryption if data is empty
-		if ( empty( $data ) ) {
-			return '';
-		}
-
-		// Get or generate encryption key
-		$encryption_key = self::get_encryption_key();
-
-		// Generate an initialization vector
-		$iv = openssl_random_pseudo_bytes( openssl_cipher_iv_length( 'AES-256-CBC' ) );
-
-		// Encrypt the data
-		$encrypted = openssl_encrypt( $data, 'AES-256-CBC', $encryption_key, 0, $iv );
-
-		// Combine the IV and encrypted data
-		return base64_encode( $iv . $encrypted );
-	}
-
-	/**
-	 * Decrypt data
-	 *
-	 * @param string $encrypted_data Data to decrypt.
-	 * @return string
-	 */
-	private static function decrypt_data( $encrypted_data ) {
-		// Skip decryption if data is empty
-		if ( empty( $encrypted_data ) ) {
-			return '';
-		}
-
-		try {
-			// Get encryption key
-			$encryption_key = self::get_encryption_key();
-
-			// Decode the combined string
-			$combined = base64_decode( $encrypted_data );
-
-			// Extract the initialization vector and encrypted data
-			$iv_length = openssl_cipher_iv_length( 'AES-256-CBC' );
-			$iv        = substr( $combined, 0, $iv_length );
-			$encrypted = substr( $combined, $iv_length );
-
-			// Decrypt the data
-			$decrypted = openssl_decrypt( $encrypted, 'AES-256-CBC', $encryption_key, 0, $iv );
-
-			return $decrypted;
-		} catch ( Exception $e ) {
-			return '';
-		}
-	}
-
-	/**
-	 * Get or generate encryption key
+	 * Get API secret
 	 *
 	 * @return string
 	 */
-	private static function get_encryption_key() {
-		$key = get_option( 'mosne_astrobin_encryption_key' );
-
-		if ( ! $key ) {
-			// Generate a random key
-			$key = bin2hex( openssl_random_pseudo_bytes( 32 ) );
-			update_option( 'mosne_astrobin_encryption_key', $key );
-		}
-
-		return $key;
+	private static function get_api_secret() {
+		return get_option( 'mosne_astrobin_api_secret', '' );
 	}
 
 	/**
@@ -248,7 +195,7 @@ class Mosne_AstroBin_Settings {
 		$credentials = array(
 			'username'   => isset( $options['username'] ) ? $options['username'] : '',
 			'api_key'    => isset( $options['api_key'] ) ? $options['api_key'] : '',
-			'api_secret' => isset( $options['api_secret'] ) ? self::decrypt_data( $options['api_secret'] ) : '',
+			'api_secret' => self::get_api_secret(),
 		);
 
 		return $credentials;
