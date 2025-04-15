@@ -137,6 +137,7 @@ class Mosne_AstroBin_Settings {
 		$api_secret = self::get_api_secret();
 
 		echo '<input type="password" id="api_secret" name="' . esc_attr( self::OPTION_NAME ) . '[api_secret]" value="' . esc_attr( $api_secret ) . '" class="regular-text">';
+		echo '<p class="description">' . esc_html__( 'Your API secret is stored securely.', 'mosne-media-library-astrobin' ) . '</p>';
 	}
 
 	/**
@@ -160,15 +161,11 @@ class Mosne_AstroBin_Settings {
 			// Save API secret securely
 			$api_secret = sanitize_text_field( $input['api_secret'] );
 
-			// Only update if the value has changed
+			// Only update if the value has changed and not empty
 			if ( ! empty( $api_secret ) ) {
 				// Store the API secret using WordPress options
 				update_option( 'mosne_astrobin_api_secret', $api_secret, false );
-				// Set a placeholder in the main options
-				$sanitized_input['api_secret'] = 'STORED_SECURELY';
-			} else {
-				// Keep the placeholder if empty (to prevent clearing on empty submissions)
-				$sanitized_input['api_secret'] = 'STORED_SECURELY';
+				// No need to store anything in main options for the secret
 			}
 		}
 

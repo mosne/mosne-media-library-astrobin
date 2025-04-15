@@ -4,7 +4,7 @@ Tags:              image,library, astrobin, astronomy, astrophotography
 Requires at least: 6.5
 Requires PHP:      7.4
 Tested up to:      6.8
-Stable tag:        1.0.1
+Stable tag:        1.0.2
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,9 @@ The Image of the Day feature allows you to browse through AstroBin's featured im
 4. Image of the Day section
 
 == Changelog ==
+
+= 1.0.2 - 2025-04-15 =
+* fixed api secret storage
 
 = 1.0.1 - 2025-04-13 =
 * Added a new feature to allow users to browse AstroBin images in the Media Library
