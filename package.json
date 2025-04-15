@@ -1,6 +1,6 @@
 {
   "name": "mosne-media-library-astrobin",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "WordPress plugin to load your Astrobin images on your website",
   "main": "build/editor.js",
   "scripts": {
@@ -43,6 +43,7 @@
 		"!*.gz",
 		"!*.dist",
 		"!package.json",
+    "!grumphp.yml",
 		"src"
 	],
   "author": "The WordPress Contributors",
