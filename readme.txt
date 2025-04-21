@@ -4,7 +4,7 @@ Tags:              image,library, astrobin, astronomy, astrophotography
 Requires at least: 6.5
 Requires PHP:      7.4
 Tested up to:      6.8
-Stable tag:        1.0.2
+Stable tag:        1.0.3
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,12 +58,13 @@ Since "All rights reserved" is the most commonly used license, I'd like to remin
 2. Edit a post or page using the Gutenberg editor
 3. Open the Media Library and look for the AstroBin categories
 4. Choose one of the browse options:
-   * "My pictures" to browse your own images
-   * "Public pictures" to search public images by title
-   * "Users' galleries" to browse images by username
-   * "Image of the day" to see current and past featured images
-   * "Top Picks" to browse top-rated images
+   - "My pictures" to browse your own images
+   - "Images by username"
+   - "Images by subject"
+   - "Images by hash (id)"
+   - "Image of the day"
 5. Select an image to insert it into your post
+6. You will also find the image in the Media Library complete with title, author attribution, copyright information, and links to both the original image and the author's profile.
 
 = What is the Image of the Day feature? =
 
@@ -81,6 +82,9 @@ The Image of the Day feature allows you to browse through AstroBin's featured im
 
 == Changelog ==
 
+= 1.0.3 - 2025-04-21 =
+* Documentation update
+
 = 1.0.2 - 2025-04-15 =
 * fixed api secret storage
 
@@ -94,9 +98,18 @@ The Image of the Day feature allows you to browse through AstroBin's featured im
 = 1.0.0 - 2025-04-10 =
 * Initial release
 
-== Development ==
+== External services ==
 
-This plugin uses @wordpress/scripts for development. To set up the development environment:
+This plugin connects to the [AstroBin API](https://www.astrobin.com/api/v1/) to retrieve image data.
+This API will be fetch via the WordPress REST API and it will send the following information:
+* your credentials (api-key and api-secret)
+* the url of your website
+* our requested terms
+
+This is required to fetch image files and related information such as title, author, and license.
+Please note that “All rights reserved” is the most commonly used license. This means you must obtain the author’s permission before publishing any of their images on your website.
+
+This service is provided by the [AstroBin API](https://welcome.astrobin.com/application-programming-interface). For more details, please refer to their [terms of use](https://welcome.astrobin.com/terms-of-service), [privacy policy](https://welcome.astrobin.com/privacy-policy).
 
 === Credits ===
 This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.

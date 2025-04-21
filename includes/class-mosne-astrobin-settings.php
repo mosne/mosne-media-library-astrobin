@@ -90,7 +90,7 @@ class Mosne_AstroBin_Settings {
 			?>
 			</form>
 			<p>
-				<?php echo esc_html__( 'Since "All rights reserved" is the most commonly used license, I\'d like to remind you that this means you need the author\'s permission before publishing any images on your website.', 'mosne-media-library-astrobin' ); ?>
+				<?php echo esc_html__( 'Please note that “All rights reserved” is the most commonly used license. This means you must obtain the author’s permission before publishing any of their images on your website.', 'mosne-media-library-astrobin' ); ?>
 			</p>
 			<p>
 				<?php echo esc_html__( 'This plugin uses the AstroBin API but is not endorsed or certified by AstroBin.', 'mosne-media-library-astrobin' ); ?>

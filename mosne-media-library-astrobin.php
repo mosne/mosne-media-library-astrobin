@@ -2,9 +2,9 @@
 /**
  * Plugin Name: Mosne Media Library AstroBin
  * Description: WordPress integration with AstroBin API
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Mosne
- * Author URI: https://mosne.com
+ * Author URI: https://mosne.it
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: mosne-media-library-astrobin
@@ -16,7 +16,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'MOSNE_ASTROBIN_VERSION', '1.0.2' );
+define( 'MOSNE_ASTROBIN_VERSION', '1.0.3' );
 define( 'MOSNE_ASTROBIN_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MOSNE_ASTROBIN_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
