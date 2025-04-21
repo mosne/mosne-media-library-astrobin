@@ -32,6 +32,19 @@ To use this plugin, you need to have an AstroBin account and create API credenti
 3. Request an API Key from the [API Key request form](https://welcome.astrobin.com/application-programming-interface#request-key)
 4. Copy the API Key and API Secret to the plugin settings
 
+## External services
+
+This plugin connects to the [AstroBin API](https://www.astrobin.com/api/v1/) to retrieve image data.
+This API will be fetch via the WordPress REST API and it will send the following information:
+* your credentials (api-key and api-secret)
+* the url of your website
+* our requested terms
+
+This is required to fetch image files and related information such as title, author, and license.
+Please note that "All rights reserved" is the most commonly used license. This means you must obtain the author's permission before publishing any of their images on your website.
+
+This service is provided by the [AstroBin API](https://welcome.astrobin.com/application-programming-interface). For more details, please refer to their [terms of use](https://welcome.astrobin.com/terms-of-service), [privacy policy](https://welcome.astrobin.com/privacy-policy).
+
 ## Usage
 
 1. Configure your AstroBin credentials in Settings > AstroBin
@@ -44,6 +57,7 @@ To use this plugin, you need to have an AstroBin account and create API credenti
    - "Images by hash (id)"
    - "Image of the day"
 5. Select an image to insert it into your post
+6. You will also find the image in the Media Library complete with title, author attribution, copyright information, and links to both the original image and the author's profile.
 
 ### Image of the Day
 
