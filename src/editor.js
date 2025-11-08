@@ -58,7 +58,7 @@ if ( typeof wp !== 'undefined' ) {
 			result.date ? formatDate( result.date ) : null
 		),
 		previewUrl: result.url_regular,
-		url: result.url_real || result.url_hd,
+		url: result.url_hd,
 	} );
 
 	// Shared fetch function to reduce code duplication
